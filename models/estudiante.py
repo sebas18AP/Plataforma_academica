@@ -3,6 +3,6 @@ class Estudiante:
         self.identificacion = identificacion
         self.nombre = nombre
         self.correo = correo
-
+    
     def mostrar_info(self):
-        return f"Estudiante: {self.nombre} - ID: {self.identificacion}"
+        return f"Estudiante: {self.nombre} - ID: {self.identificacion}" 
