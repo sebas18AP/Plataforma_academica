@@ -7,4 +7,4 @@ class Asignatura:
 
     def mostrar_info(self):
         return f"[{self.codigo}] {self.nombre} - Profesor: {self.profesor}"
-        
+    
