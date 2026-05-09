@@ -55,5 +55,19 @@ class SistemaAcademico:
             "Aprobados": aprobados,
             "Reprobados": reprobados,
             "Total_Calificaciones": len(self.calificaciones)
-        } 
+        }
+
+    
+    #  Requerimiento de Consultas y búsquedas avanzadas
+    def buscar_estudiante(self, identificacion):
+        # Se recorre la lista de estudiantes para buscar coincidencias
+        for estudiante in self.estudiantes:
+            if estudiante.identificacion == identificacion:
+                return estudiante # Si lo encuentra, devuelve todos los datos del estudiante
+                
+        return None # Si se termina de buscar y se encuentra devuelve None
+            
+    
+
+ 
 
