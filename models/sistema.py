@@ -19,4 +19,27 @@ class SistemaAcademico:
             return 0.0 # Si no tiene notas, su promedio es 0
             
         promedio = sum(notas) / len(notas)
-        return round(promedio, 2) 
+        return round(promedio, 2)
+
+        def calcular_promedio_asignatura(self, codigo_asignatura):
+        # Filtramos las notas de una materia específica
+        notas = [c.nota_obtenida for c in self.calificaciones if c.codigo_asignatura == codigo_asignatura]
+        
+        if not notas:
+            return 0.0 # Si nadie tiene notas en esa materia, es 0
+            
+        promedio = sum(notas) / len(notas)
+        return round(promedio, 2)
+
+    def obtener_distribucion_notas(self):
+        # Un conteo rápido para saber cuántos pasaron y cuántos reprobaron
+        # Suponiendo que se aprueba con 3.0
+        aprobados = len([c for c in self.calificaciones if c.nota_obtenida >= 3.0])
+        reprobados = len([c for c in self.calificaciones if c.nota_obtenida < 3.0])
+        
+        return {
+            "Aprobados": aprobados,
+            "Reprobados": reprobados,
+            "Total_Calificaciones": len(self.calificaciones)
+        } 
+
