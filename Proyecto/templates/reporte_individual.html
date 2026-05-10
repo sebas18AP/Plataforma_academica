@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ titulo }} - Plataforma de Monitoreo Académico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-8">
+                    <div class="text-2xl font-bold text-blue-600">⚡ Monitoreo Académico</div>
+                    <a href="/reportes" class="text-gray-700 hover:text-blue-600 transition">← Volver a Reportes</a>
+                </div>
+                <div class="flex items-center">
+                    <a href="/logout" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Cerrar sesión</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Título -->
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ titulo }}</h1>
+        <p class="text-gray-600 mb-8">Usuario: <strong>{{ usuario }}</strong></p>
+
+        <!-- Gráfico -->
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            {{ grafico | safe }}
+        </div>
+
+        <!-- Información útil -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-blue-50 rounded-lg p-6 border-l-4 border-blue-500">
+                <h3 class="font-semibold text-blue-900 mb-2">📊 Interactivo</h3>
+                <p class="text-blue-800 text-sm">Pasa el cursor sobre el gráfico para ver valores exactos. Usa la barra de herramientas para zoom, pan y más.</p>
+            </div>
+            <div class="bg-green-50 rounded-lg p-6 border-l-4 border-green-500">
+                <h3 class="font-semibold text-green-900 mb-2">💾 Descargar</h3>
+                <p class="text-green-800 text-sm">En la esquina superior derecha del gráfico encontrarás la opción para descargar como PNG.</p>
+            </div>
+            <div class="bg-purple-50 rounded-lg p-6 border-l-4 border-purple-500">
+                <h3 class="font-semibold text-purple-900 mb-2">🔄 Actualizar</h3>
+                <p class="text-purple-800 text-sm">Los gráficos se actualizan automáticamente. Recarga la página para ver los últimos datos.</p>
+            </div>
+        </div>
+
+        <!-- Opciones adicionales -->
+        <div class="mt-8 text-center">
+            <a href="/reportes" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block">
+                Ver todos los reportes
+            </a>
+            <a href="/dashboard" class="ml-4 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition inline-block">
+                Ir al Dashboard
+            </a>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - Plataforma de Monitoreo Académico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-8">
+                    <div class="text-2xl font-bold text-blue-600">⚡ Monitoreo Académico</div>
+                    <a href="/dashboard" class="text-gray-700 hover:text-blue-600 transition">← Volver al Dashboard</a>
+                </div>
+                <div class="flex items-center">
+                    <a href="/logout" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Cerrar sesión</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Título -->
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Reportes Estadísticos</h1>
+        <p class="text-gray-600 mb-8">Visualiza análisis detallados del desempeño académico</p>
+
+        <!-- Grid de reportes -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            <!-- Reporte 1: Distribución de Notas -->
+            <a href="/reportes/distribucion-notas" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+                <div class="h-40 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
+                    <span class="text-6xl">📊</span>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Distribución de Notas</h3>
+                    <p class="text-gray-600 text-sm mb-4">Histograma con la distribución de todas las calificaciones registradas en el sistema.</p>
+                    <div class="text-blue-600 font-semibold text-sm">Ver reporte →</div>
+                </div>
+            </a>
+
+            <!-- Reporte 2: Promedios por Estudiante -->
+            <a href="/reportes/promedios-estudiantes" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+                <div class="h-40 bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
+                    <span class="text-6xl">👥</span>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Promedios por Estudiante</h3>
+                    <p class="text-gray-600 text-sm mb-4">Gráfico de barras con el promedio académico de cada estudiante inscrito.</p>
+                    <div class="text-green-600 font-semibold text-sm">Ver reporte →</div>
+                </div>
+            </a>
+
+            <!-- Reporte 3: Promedios por Asignatura -->
+            <a href="/reportes/promedios-asignaturas" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+                <div class="h-40 bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
+                    <span class="text-6xl">📚</span>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Promedios por Asignatura</h3>
+                    <p class="text-gray-600 text-sm mb-4">Comparativa del desempeño general en cada asignatura del programa.</p>
+                    <div class="text-purple-600 font-semibold text-sm">Ver reporte →</div>
+                </div>
+            </a>
+
+            <!-- Reporte 4: Aprobación vs Reprobación -->
+            <a href="/reportes/aprobacion" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+                <div class="h-40 bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
+                    <span class="text-6xl">📈</span>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Aprobación vs Reprobación</h3>
+                    <p class="text-gray-600 text-sm mb-4">Gráfico de pastel mostrando la proporción de estudiantes aprobados y reprobados.</p>
+                    <div class="text-orange-600 font-semibold text-sm">Ver reporte →</div>
+                </div>
+            </a>
+
+            <!-- Reporte 5: Rangos de Calificaciones -->
+            <a href="/reportes/rangos" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+                <div class="h-40 bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white">
+                    <span class="text-6xl">📉</span>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Distribución por Rangos</h3>
+                    <p class="text-gray-600 text-sm mb-4">Análisis de calificaciones por rangos (Deficiente, Regular, Bueno, Excelente).</p>
+                    <div class="text-red-600 font-semibold text-sm">Ver reporte →</div>
+                </div>
+            </a>
+
+            <!-- Reporte 6: Más reportes (Próximamente) -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden border-2 border-dashed border-gray-300">
+                <div class="h-40 bg-gray-100 flex items-center justify-center text-gray-400">
+                    <span class="text-6xl">🔜</span>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Más Reportes</h3>
+                    <p class="text-gray-600 text-sm mb-4">Pronto habrá más reportes disponibles como evolución del desempeño, comparativas por grupo, y más.</p>
+                    <div class="text-gray-600 font-semibold text-sm">Próximamente →</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información útil -->
+        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-blue-900 mb-3">💡 Información útil</h3>
+            <ul class="list-disc list-inside space-y-2 text-blue-800 text-sm">
+                <li>Todos los gráficos son <strong>interactivos</strong>: puedes pasar el mouse para ver más detalles</li>
+                <li>Puedes <strong>hacer zoom</strong>, <strong>desplazarte</strong> y <strong>descargar</strong> los gráficos</li>
+                <li>Los datos se actualizan automáticamente cuando se registran nuevas calificaciones</li>
+                <li>Nota mínima de aprobación: <strong>3.0</strong></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

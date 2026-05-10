@@ -1,10 +1,166 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from models.sistema import SistemaAcademico
+from models.estudiante import Estudiante
+from models.asignatura import Asignatura
+from models.calificacion import Calificacion
+from models.matricula import Matricula
+from models.reportes import GestorReportes
+import os
 
 app = Flask(__name__)
+app.secret_key = 'tu_clave_secreta_aqui'
 
+# Instancia global del sistema
+sistema = SistemaAcademico()
+gestor_reportes = GestorReportes(sistema)
+
+# Datos de prueba 
+def cargar_datos_prueba():
+    """Carga datos de demostración para visualizar reportes"""
+    # Estudiantes
+    est1 = Estudiante("1001", "Juan Pérez", "juan@unitec.edu")
+    est2 = Estudiante("1002", "María García", "maria@unitec.edu")
+    est3 = Estudiante("1003", "Carlos López", "carlos@unitec.edu")
+    est4 = Estudiante("1004", "Ana Rodríguez", "ana@unitec.edu")
+    est5 = Estudiante("1005", "Pedro Martínez", "pedro@unitec.edu")
+    
+    sistema.estudiantes = [est1, est2, est3, est4, est5]
+    
+    # Asignaturas
+    asig1 = Asignatura("ING101", "Cálculo I", 4, "Dr. Johan")
+    asig2 = Asignatura("ING102", "Programación I", 3, "Dr. Johan")
+    asig3 = Asignatura("ING103", "Física I", 4, "Dra. María")
+    asig4 = Asignatura("ING104", "Álgebra Lineal", 3, "Dr. Carlos")
+    
+    sistema.asignaturas = [asig1, asig2, asig3, asig4]
+    
+    # Calificaciones 
+    calificaciones_data = [
+        ("1001", "ING101", 4.5, "Corte 1"),
+        ("1001", "ING102", 3.8, "Corte 1"),
+        ("1001", "ING103", 4.2, "Corte 1"),
+        ("1002", "ING101", 2.8, "Corte 1"),
+        ("1002", "ING102", 3.1, "Corte 1"),
+        ("1002", "ING103", 2.5, "Corte 1"),
+        ("1003", "ING101", 3.9, "Corte 1"),
+        ("1003", "ING102", 4.0, "Corte 1"),
+        ("1003", "ING104", 3.5, "Corte 1"),
+        ("1004", "ING102", 4.8, "Corte 1"),
+        ("1004", "ING103", 4.6, "Corte 1"),
+        ("1004", "ING104", 4.3, "Corte 1"),
+        ("1005", "ING101", 2.2, "Corte 1"),
+        ("1005", "ING102", 2.9, "Corte 1"),
+        ("1005", "ING103", 2.1, "Corte 1"),
+    ]
+    
+    sistema.calificaciones = [Calificacion(*datos) for datos in calificaciones_data]
+
+cargar_datos_prueba()
+
+# rutas de autenticacion
 @app.route('/')
 def login():
     return render_template('login.html')
+
+@app.route('/dashboard')
+def dashboard():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    estadisticas = gestor_reportes.obtener_estadisticas_generales()
+    return render_template('dashboard.html', 
+                         usuario=session.get('usuario'),
+                         rol=session.get('rol'),
+                         estadisticas=estadisticas)
+
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    data = request.json
+    usuario = data.get('usuario')
+    password = data.get('password')
+    
+    rol = sistema.iniciar_sesion(usuario, password)
+    if rol:
+        session['usuario'] = usuario
+        session['rol'] = rol
+        return jsonify({'success': True, 'rol': rol})
+    
+    return jsonify({'success': False, 'mensaje': 'Usuario o contraseña incorrectos'}), 401
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
+
+# rutas de reportes 
+@app.route('/reportes')
+def reportes():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    return render_template('reportes.html', usuario=session.get('usuario'))
+
+@app.route('/reportes/distribucion-notas')
+def reporte_distribucion():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    grafico = gestor_reportes.grafico_distribucion_notas()
+    return render_template('reporte_individual.html', 
+                         titulo='Distribución de Notas',
+                         grafico=grafico,
+                         usuario=session.get('usuario'))
+
+@app.route('/reportes/promedios-estudiantes')
+def reporte_promedios_estudiantes():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    grafico = gestor_reportes.grafico_promedios_estudiantes()
+    return render_template('reporte_individual.html',
+                         titulo='Promedios por Estudiante',
+                         grafico=grafico,
+                         usuario=session.get('usuario'))
+
+@app.route('/reportes/promedios-asignaturas')
+def reporte_promedios_asignaturas():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    grafico = gestor_reportes.grafico_promedios_asignaturas()
+    return render_template('reporte_individual.html',
+                         titulo='Promedios por Asignatura',
+                         grafico=grafico,
+                         usuario=session.get('usuario'))
+
+@app.route('/reportes/aprobacion')
+def reporte_aprobacion():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    grafico = gestor_reportes.grafico_aprobacion()
+    return render_template('reporte_individual.html',
+                         titulo='Distribución: Aprobados vs Reprobados',
+                         grafico=grafico,
+                         usuario=session.get('usuario'))
+
+@app.route('/reportes/rangos')
+def reporte_rangos():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    grafico = gestor_reportes.grafico_comparacion_rangos()
+    return render_template('reporte_individual.html',
+                         titulo='Distribución por Rangos de Calificaciones',
+                         grafico=grafico,
+                         usuario=session.get('usuario'))
+
+@app.route('/api/estadisticas')
+def api_estadisticas():
+    if 'usuario' not in session:
+        return jsonify({'error': 'No autorizado'}), 401
+    
+    return jsonify(gestor_reportes.obtener_estadisticas_generales())
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
