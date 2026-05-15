@@ -123,6 +123,31 @@ def api_register():
     else:
         return jsonify({'success': False, 'mensaje': mensaje}), 400
 
+@app.route('/matricular', methods=['GET', 'POST'])
+def matricular():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    if request.method == 'POST':
+        # Procesar matrícula (vía formulario tradicional o AJAX)
+        estudiante_id = request.form.get('estudiante_id')
+        codigo_asig = request.form.get('codigo_asignatura')
+        periodo = request.form.get('periodo')
+        
+        if not all([estudiante_id, codigo_asig, periodo]):
+            return "Error: Faltan campos obligatorios", 400
+            
+        mensaje = sistema.matricular_estudiante(estudiante_id, codigo_asig, periodo)
+        return redirect(url_for('dashboard')) # Redirigir al dashboard tras matricular
+
+    # Cargar datos para los selects
+    estudiantes = sistema.obtener_estudiantes()
+    asignaturas = sistema.obtener_asignaturas()
+    return render_template('matricular.html', 
+                         estudiantes=estudiantes, 
+                         asignaturas=asignaturas,
+                         usuario=session.get('usuario'))
+
 # rutas de reportes 
 @app.route('/reportes')
 def reportes():

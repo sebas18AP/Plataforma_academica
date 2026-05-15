@@ -231,6 +231,11 @@ class SistemaAcademico:
         finally:
             conn.close()
 
+    def matricular_estudiante(self, estudiante_id, codigo_asignatura, periodo):
+        """Metodo de conveniencia para matricular un estudiante creando el objeto Matricula."""
+        nueva_matricula = Matricula(estudiante_id, codigo_asignatura, periodo)
+        return self.registrar_matricula(nueva_matricula)
+
     def obtener_matriculas(self):
         """Retorna lista de objetos Matricula desde la BD."""
         conn = self._get_connection()
