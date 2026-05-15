@@ -1,4 +1,6 @@
 import sqlite3
+from werkzeug.security import generate_password_hash
+
 
 from models.estudiante import Estudiante
 from models.asignatura import Asignatura
@@ -27,6 +29,49 @@ class SistemaAcademico:
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
         return conn
+
+    # ================================================================
+    #  USUARIOS (Autenticación y Registro)
+    # ================================================================
+
+    def registrar_usuario(self, nombre, identificacion, correo, contrasena, rol):
+        """
+        Registra un usuario en la tabla de credenciales y en su tabla de perfil.
+        Usa hashing para la contraseña.
+        """
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        
+        # Hashear la contraseña antes de guardar
+        hash_password = generate_password_hash(contrasena)
+        
+        try:
+            # 1. Insertar en tabla de autenticación
+            cursor.execute(
+                "INSERT INTO usuarios (nombre, correo_institucional, contrasena, rol) VALUES (?, ?, ?, ?)",
+                (nombre, correo, hash_password, rol)
+            )
+            
+            # 2. Insertar en tabla de perfil según el rol
+            if rol == 'Estudiante':
+                cursor.execute(
+                    "INSERT INTO estudiantes (id, nombre, correo) VALUES (?, ?, ?)",
+                    (identificacion, nombre, correo)
+                )
+            elif rol == 'Profesor':
+                cursor.execute(
+                    "INSERT INTO profesores (id, nombre, correo) VALUES (?, ?, ?, ?)",
+                    (identificacion, nombre, correo, "Departamento por asignar")
+                )
+            
+            conn.commit()
+            return True, "Usuario registrado exitosamente"
+        except sqlite3.IntegrityError:
+            return False, "El correo o la identificación ya están registrados"
+        except Exception as e:
+            return False, f"Error inesperado: {str(e)}"
+        finally:
+            conn.close()
 
     # ================================================================
     #  PROPIEDADES — compatibilidad con reportes.py

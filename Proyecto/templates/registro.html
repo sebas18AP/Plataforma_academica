@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - Plataforma Académica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border-t-4 border-blue-600">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Crear Cuenta</h1>
+            <p class="text-gray-500 mt-2">Únete a la Plataforma de Monitoreo Académico</p>
+        </div>
+
+        <form id="registroForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Nombre Completo</label>
+                <input type="text" id="nombre" required
+                    class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    placeholder="Ej: Juan Pérez">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Identificación (ID)</label>
+                <input type="text" id="identificacion" required
+                    class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    placeholder="Ej: 1001">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Correo Institucional</label>
+                <input type="email" id="correo" required
+                    class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    placeholder="usuario@unitec.edu.co">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Rol en la Institución</label>
+                <select id="rol" required
+                    class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition bg-white">
+                    <option value="Estudiante">Estudiante</option>
+                    <option value="Profesor">Profesor</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700">Contraseña</label>
+                <input type="password" id="password" required
+                    class="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+                    placeholder="••••••••">
+            </div>
+
+            <button type="submit"
+                class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transform hover:scale-[1.02] transition shadow-lg">
+                Registrarse
+            </button>
+        </form>
+
+        <div id="mensaje" class="mt-4 text-center text-sm hidden"></div>
+
+        <div class="mt-6 text-center">
+            <p class="text-gray-600">¿Ya tienes cuenta? 
+                <a href="/" class="text-blue-600 font-bold hover:underline">Inicia Sesión</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('registroForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const btn = e.target.querySelector('button');
+            const msgDiv = document.getElementById('mensaje');
+            
+            const data = {
+                nombre: document.getElementById('nombre').value,
+                identificacion: document.getElementById('identificacion').value,
+                correo: document.getElementById('correo').value,
+                rol: document.getElementById('rol').value,
+                password: document.getElementById('password').value
+            };
+
+            btn.disabled = true;
+            btn.innerText = 'Procesando...';
+
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                msgDiv.classList.remove('hidden', 'text-red-500', 'text-green-500');
+                
+                if (result.success) {
+                    msgDiv.classList.add('text-green-500');
+                    msgDiv.innerText = result.mensaje + ". Redirigiendo...";
+                    setTimeout(() => window.location.href = '/', 2000);
+                } else {
+                    msgDiv.classList.add('text-red-500');
+                    msgDiv.innerText = result.mensaje;
+                    btn.disabled = false;
+                    btn.innerText = 'Registrarse';
+                }
+            } catch (error) {
+                msgDiv.classList.remove('hidden');
+                msgDiv.classList.add('text-red-500');
+                msgDiv.innerText = "Error de conexión con el servidor";
+                btn.disabled = false;
+                btn.innerText = 'Registrarse';
+            }
+        });
+    </script>
+</body>
+</html>

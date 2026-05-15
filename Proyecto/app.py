@@ -1,5 +1,7 @@
 # pyrefly: ignore [missing-import]
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from werkzeug.security import check_password_hash
+
 from models.sistema import SistemaAcademico
 from models.estudiante import Estudiante
 from models.asignatura import Asignatura
@@ -82,7 +84,7 @@ def api_login():
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Error en la base de datos: {str(e)}'}), 500
 
-    if usuario_db:
+    if usuario_db and check_password_hash(usuario_db['contrasena'], password):
         session['usuario'] = usuario_db['nombre']
         session['correo'] = usuario_db['correo_institucional']
         session['rol'] = usuario_db['rol']
@@ -94,6 +96,32 @@ def api_login():
 def logout():
     session.clear()
     return redirect(url_for('login'))
+
+# --- Rutas de Registro ---
+
+@app.route('/registro')
+def registro():
+    return render_template('registro.html')
+
+@app.route('/api/register', methods=['POST'])
+def api_register():
+    data = request.json
+    nombre = data.get('nombre')
+    identificacion = data.get('identificacion')
+    correo = data.get('correo')
+    password = data.get('password')
+    rol = data.get('rol')
+    
+    # Validaciones básicas
+    if not all([nombre, identificacion, correo, password, rol]):
+        return jsonify({'success': False, 'mensaje': 'Todos los campos son obligatorios'}), 400
+    
+    success, mensaje = sistema.registrar_usuario(nombre, identificacion, correo, password, rol)
+    
+    if success:
+        return jsonify({'success': True, 'mensaje': mensaje})
+    else:
+        return jsonify({'success': False, 'mensaje': mensaje}), 400
 
 # rutas de reportes 
 @app.route('/reportes')
