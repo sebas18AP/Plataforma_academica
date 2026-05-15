@@ -1,9 +1,11 @@
+# pyrefly: ignore [missing-import]
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from models.sistema import SistemaAcademico
 from models.estudiante import Estudiante
 from models.asignatura import Asignatura
 from models.calificacion import Calificacion
 from models.matricula import Matricula
+from models.profesor import Profesor
 from models.reportes import GestorReportes
 import os
 import sqlite3
@@ -80,11 +82,16 @@ def cargar_datos_prueba():
     
     sistema.estudiantes = [est1, est2, est3, est4, est5]
     
-    # Asignaturas
-    asig1 = Asignatura("ING101", "Cálculo I", 4, "Dr. Johan")
-    asig2 = Asignatura("ING102", "Programación I", 3, "Dr. Johan")
-    asig3 = Asignatura("ING103", "Física I", 4, "Dra. María")
-    asig4 = Asignatura("ING104", "Álgebra Lineal", 3, "Dr. Carlos")
+    # Profesores
+    prof1 = Profesor("P001", "Dr. Johan", "johan@unitec.edu", "Ingeniería Eléctrica")
+    prof2 = Profesor("P002", "Dra. María", "maria.prof@unitec.edu", "Física")
+    prof3 = Profesor("P003", "Dr. Carlos", "carlos.prof@unitec.edu", "Matemáticas")
+
+    # Asignaturas (ahora reciben objetos Profesor en vez de strings)
+    asig1 = Asignatura("ING101", "Cálculo I", 4, prof1)
+    asig2 = Asignatura("ING102", "Programación I", 3, prof1)
+    asig3 = Asignatura("ING103", "Física I", 4, prof2)
+    asig4 = Asignatura("ING104", "Álgebra Lineal", 3, prof3)
     
     sistema.asignaturas = [asig1, asig2, asig3, asig4]
     
