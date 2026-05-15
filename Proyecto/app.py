@@ -22,40 +22,19 @@ def get_db_connection():
 
 def init_db():
     """
-    Inicializa la base de datos con la tabla y los datos de prueba.
+    Inicializa la base de datos con todas las tablas y datos de prueba.
     Se ejecuta automáticamente al arrancar la app si el .db no existe.
     Esto es necesario para Render (sistema de archivos efímero).
+    Delega la creación de tablas a database_setup.py para no duplicar SQL.
     """
+    from database_setup import crear_tablas, insertar_datos_prueba, DB_PATH as _DB_PATH
+
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS usuarios (
-            id                   INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre               TEXT    NOT NULL,
-            correo_institucional TEXT    NOT NULL UNIQUE,
-            contrasena           TEXT    NOT NULL,
-            rol                  TEXT    NOT NULL DEFAULT 'Estudiante'
-        )
-    """)
-
-    estudiantes = [
-        ("Carlos Andrés Pérez",   "c.perez@unitec.edu.co",      "unitec2026", "Estudiante"),
-        ("Valentina Gómez",        "v.gomez@unitec.edu.co",       "unitec2026", "Estudiante"),
-        ("Jorge Luis Rodríguez",   "j.rodriguez@unitec.edu.co",   "unitec2026", "Estudiante"),
-        ("Mariana Lucía Toro",     "m.toro@unitec.edu.co",        "unitec2026", "Estudiante"),
-        ("Felipe Santiago Ruiz",   "f.ruiz@unitec.edu.co",        "unitec2026", "Estudiante"),
-    ]
-
-    for datos in estudiantes:
-        try:
-            cursor.execute(
-                "INSERT INTO usuarios (nombre, correo_institucional, contrasena, rol) VALUES (?, ?, ?, ?)",
-                datos
-            )
-        except sqlite3.IntegrityError:
-            pass  # Ya existe, ignorar
+    crear_tablas(conn, cursor)
+    insertar_datos_prueba(conn, cursor)
 
     conn.commit()
     conn.close()

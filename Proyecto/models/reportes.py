@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 import plotly.graph_objects as go
 from collections import defaultdict
 
