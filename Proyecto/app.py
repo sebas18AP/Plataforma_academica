@@ -6,9 +6,63 @@ from models.calificacion import Calificacion
 from models.matricula import Matricula
 from models.reportes import GestorReportes
 import os
+import sqlite3
+
+# --- Ruta de la base de datos SQLite ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'data_base', 'academico.db')
+
+def get_db_connection():
+    """Abre una conexión a la base de datos y devuelve filas como diccionarios."""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row  # acceso por nombre de columna
+    return conn
+
+def init_db():
+    """
+    Inicializa la base de datos con la tabla y los datos de prueba.
+    Se ejecuta automáticamente al arrancar la app si el .db no existe.
+    Esto es necesario para Render (sistema de archivos efímero).
+    """
+    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id                   INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre               TEXT    NOT NULL,
+            correo_institucional TEXT    NOT NULL UNIQUE,
+            contrasena           TEXT    NOT NULL,
+            rol                  TEXT    NOT NULL DEFAULT 'Estudiante'
+        )
+    """)
+
+    estudiantes = [
+        ("Carlos Andrés Pérez",   "c.perez@unitec.edu.co",      "unitec2026", "Estudiante"),
+        ("Valentina Gómez",        "v.gomez@unitec.edu.co",       "unitec2026", "Estudiante"),
+        ("Jorge Luis Rodríguez",   "j.rodriguez@unitec.edu.co",   "unitec2026", "Estudiante"),
+        ("Mariana Lucía Toro",     "m.toro@unitec.edu.co",        "unitec2026", "Estudiante"),
+        ("Felipe Santiago Ruiz",   "f.ruiz@unitec.edu.co",        "unitec2026", "Estudiante"),
+    ]
+
+    for datos in estudiantes:
+        try:
+            cursor.execute(
+                "INSERT INTO usuarios (nombre, correo_institucional, contrasena, rol) VALUES (?, ?, ?, ?)",
+                datos
+            )
+        except sqlite3.IntegrityError:
+            pass  # Ya existe, ignorar
+
+    conn.commit()
+    conn.close()
+
+# --- Inicializar BD al arrancar ---
+init_db()
 
 app = Flask(__name__)
-app.secret_key = 'tu_clave_secreta_aqui'
+app.secret_key = os.environ.get('SECRET_KEY', 'clave_local_desarrollo')
 
 # Instancia global del sistema
 sistema = SistemaAcademico()
@@ -76,16 +130,27 @@ def dashboard():
 @app.route('/api/login', methods=['POST'])
 def api_login():
     data = request.json
-    usuario = data.get('usuario')
+    correo = data.get('usuario')   # el campo 'usuario' del form lleva el correo
     password = data.get('password')
-    
-    rol = sistema.iniciar_sesion(usuario, password)
-    if rol:
-        session['usuario'] = usuario
-        session['rol'] = rol
-        return jsonify({'success': True, 'rol': rol})
-    
-    return jsonify({'success': False, 'mensaje': 'Usuario o contraseña incorrectos'}), 401
+
+    # --- Autenticación contra la base de datos SQLite ---
+    try:
+        conn = get_db_connection()
+        usuario_db = conn.execute(
+            'SELECT * FROM usuarios WHERE correo_institucional = ? AND contrasena = ?',
+            (correo, password)
+        ).fetchone()
+        conn.close()
+    except Exception as e:
+        return jsonify({'success': False, 'mensaje': f'Error en la base de datos: {str(e)}'}), 500
+
+    if usuario_db:
+        session['usuario'] = usuario_db['nombre']
+        session['correo'] = usuario_db['correo_institucional']
+        session['rol'] = usuario_db['rol']
+        return jsonify({'success': True, 'rol': usuario_db['rol'], 'nombre': usuario_db['nombre']})
+
+    return jsonify({'success': False, 'mensaje': 'Correo o contraseña incorrectos'}), 401
 
 @app.route('/logout')
 def logout():
