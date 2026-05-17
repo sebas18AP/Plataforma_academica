@@ -1,5 +1,6 @@
 # pyrefly: ignore [missing-import]
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+# pyrefly: ignore [missing-import]
 from werkzeug.security import check_password_hash
 
 from models.sistema import SistemaAcademico
@@ -144,6 +145,35 @@ def matricular():
     estudiantes = sistema.obtener_estudiantes()
     asignaturas = sistema.obtener_asignaturas()
     return render_template('matricular.html', 
+                         estudiantes=estudiantes, 
+                         asignaturas=asignaturas,
+                         usuario=session.get('usuario'))
+
+@app.route('/calificar', methods=['GET', 'POST'])
+def calificar():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    if session.get('rol') != 'Profesor':
+        return "Acceso denegado. Solo los profesores pueden calificar.", 403
+    
+    if request.method == 'POST':
+        estudiante_id = request.form.get('estudiante_id')
+        codigo_asig = request.form.get('codigo_asignatura')
+        nota = request.form.get('nota')
+        corte = request.form.get('corte')
+        
+        if not all([estudiante_id, codigo_asig, nota, corte]):
+            return "Error: Faltan campos obligatorios", 400
+            
+        mensaje = sistema.registrar_calificacion(estudiante_id, codigo_asig, nota, corte)
+        # Redirigir al dashboard tras calificar, o podríamos mostrar un mensaje de éxito
+        return redirect(url_for('dashboard'))
+
+    # Cargar datos para los selects
+    estudiantes = sistema.obtener_estudiantes()
+    asignaturas = sistema.obtener_asignaturas()
+    return render_template('calificar.html', 
                          estudiantes=estudiantes, 
                          asignaturas=asignaturas,
                          usuario=session.get('usuario'))

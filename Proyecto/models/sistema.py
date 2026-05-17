@@ -1,4 +1,5 @@
 import sqlite3
+# pyrefly: ignore [missing-import]
 from werkzeug.security import generate_password_hash
 
 
@@ -178,19 +179,21 @@ class SistemaAcademico:
     #  CALIFICACIONES
     # ================================================================
 
-    def registrar_calificacion(self, calificacion):
-        """Inserta una calificación en la BD."""
+    def registrar_calificacion(self, estudiante_id, codigo_asignatura, nota, corte):
+        """Inserta una calificación en la BD, validando la nota."""
+        try:
+            nota = float(nota)
+            if not (0.0 <= nota <= 5.0):
+                return "Error: La nota debe estar entre 0.0 y 5.0"
+        except ValueError:
+            return "Error: La nota debe ser un número"
+
         conn = self._get_connection()
         try:
             conn.execute(
                 "INSERT INTO calificaciones (estudiante_id, codigo_asignatura, nota, corte) "
                 "VALUES (?, ?, ?, ?)",
-                (
-                    calificacion.estudiante_id,
-                    calificacion.codigo_asignatura,
-                    calificacion.nota_obtenida,
-                    calificacion.corte,
-                ),
+                (estudiante_id, codigo_asignatura, nota, corte),
             )
             conn.commit()
             return "Calificacion registrada con exito."
