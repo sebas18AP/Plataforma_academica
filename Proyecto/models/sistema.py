@@ -74,6 +74,51 @@ class SistemaAcademico:
         finally:
             conn.close()
 
+    def obtener_perfil_usuario(self, correo, rol):
+        """Obtiene los datos completos del usuario según su rol."""
+        conn = self._get_connection()
+        try:
+            if rol == 'Estudiante':
+                return conn.execute("SELECT id as identificacion, nombre, correo FROM estudiantes WHERE correo = ?", (correo,)).fetchone()
+            elif rol == 'Profesor':
+                return conn.execute("SELECT id as identificacion, nombre, correo, departamento FROM profesores WHERE correo = ?", (correo,)).fetchone()
+        finally:
+            conn.close()
+        return None
+
+    def actualizar_usuario(self, correo_actual, rol, nombre, contrasena_nueva=None, departamento=None):
+        """Actualiza la información del usuario en la tabla de autenticación y su perfil."""
+        conn = self._get_connection()
+        cursor = conn.cursor()
+        try:
+            # 1. Actualizar tabla usuarios (auth)
+            if contrasena_nueva:
+                hash_pwd = generate_password_hash(contrasena_nueva)
+                cursor.execute("UPDATE usuarios SET nombre = ?, contrasena = ? WHERE correo_institucional = ?", 
+                               (nombre, hash_pwd, correo_actual))
+            else:
+                cursor.execute("UPDATE usuarios SET nombre = ? WHERE correo_institucional = ?", 
+                               (nombre, correo_actual))
+            
+            # 2. Actualizar tabla de perfil
+            if rol == 'Estudiante':
+                cursor.execute("UPDATE estudiantes SET nombre = ? WHERE correo = ?", (nombre, correo_actual))
+            elif rol == 'Profesor':
+                # Si no se envía departamento, se mantiene el actual
+                if departamento is not None:
+                    cursor.execute("UPDATE profesores SET nombre = ?, departamento = ? WHERE correo = ?", 
+                                   (nombre, departamento, correo_actual))
+                else:
+                    cursor.execute("UPDATE profesores SET nombre = ? WHERE correo = ?", 
+                                   (nombre, correo_actual))
+            
+            conn.commit()
+            return True, "Perfil actualizado exitosamente"
+        except Exception as e:
+            return False, f"Error al actualizar: {str(e)}"
+        finally:
+            conn.close()
+
     # ================================================================
     #  PROPIEDADES — compatibilidad con reportes.py
     #  (reportes.py usa self.sistema.estudiantes, .calificaciones, etc.)
@@ -291,3 +336,17 @@ class SistemaAcademico:
             "Reprobados": fila["reprobados"],
             "Total_Calificaciones": fila["total"],
         }
+
+    def obtener_estudiantes_en_riesgo(self):
+        """Retorna lista de estudiantes con promedio < 3.0 mediante consulta SQL."""
+        conn = self._get_connection()
+        filas = conn.execute("""
+            SELECT e.id, e.nombre, ROUND(AVG(c.nota), 2) AS promedio
+            FROM estudiantes e
+            JOIN calificaciones c ON e.id = c.estudiante_id
+            GROUP BY e.id, e.nombre
+            HAVING promedio < 3.0
+            ORDER BY promedio ASC
+        """).fetchall()
+        conn.close()
+        return [{"id": f["id"], "nombre": f["nombre"], "promedio": f["promedio"]} for f in filas]

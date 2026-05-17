@@ -178,6 +178,43 @@ def calificar():
                          asignaturas=asignaturas,
                          usuario=session.get('usuario'))
 
+@app.route('/perfil', methods=['GET', 'POST'])
+def perfil():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+        
+    correo = session.get('correo')
+    rol = session.get('rol')
+    
+    if request.method == 'POST':
+        nombre = request.form.get('nombre')
+        contrasena = request.form.get('contrasena') # Opcional
+        departamento = request.form.get('departamento') # Solo para profesores
+        
+        if not nombre:
+            return "Error: El nombre es obligatorio", 400
+            
+        success, mensaje = sistema.actualizar_usuario(
+            correo_actual=correo, 
+            rol=rol, 
+            nombre=nombre, 
+            contrasena_nueva=contrasena if contrasena else None, 
+            departamento=departamento
+        )
+        
+        if success:
+            session['usuario'] = nombre # Actualizar el nombre en la sesión
+            return redirect(url_for('dashboard'))
+        else:
+            return f"Error al actualizar: {mensaje}", 500
+
+    # GET: Cargar datos actuales
+    perfil_data = sistema.obtener_perfil_usuario(correo, rol)
+    return render_template('editar_perfil.html', 
+                         usuario=session.get('usuario'),
+                         rol=rol,
+                         perfil=perfil_data)
+
 # rutas de reportes 
 @app.route('/reportes')
 def reportes():
@@ -239,6 +276,17 @@ def reporte_rangos():
     return render_template('reporte_individual.html',
                          titulo='Distribución por Rangos de Calificaciones',
                          grafico=grafico,
+                         usuario=session.get('usuario'))
+
+@app.route('/reportes/riesgo')
+def reporte_riesgo():
+    if 'usuario' not in session:
+        return redirect(url_for('login'))
+    
+    estudiantes_riesgo = sistema.obtener_estudiantes_en_riesgo()
+    return render_template('reporte_riesgo.html', 
+                         titulo='Estudiantes en Riesgo',
+                         estudiantes=estudiantes_riesgo,
                          usuario=session.get('usuario'))
 
 @app.route('/api/estadisticas')
