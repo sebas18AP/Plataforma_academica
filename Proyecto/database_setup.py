@@ -16,6 +16,7 @@ Esto creará (o actualizará) el archivo: data_base/academico.db
 
 import sqlite3
 import os
+from werkzeug.security import generate_password_hash
 
 # --- Ruta de la base de datos ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -138,7 +139,7 @@ def insertar_datos_prueba(conn, cursor):
 
     # --- Usuarios (credenciales de login) ---
     print("\n-- Usuarios --")
-    usuarios = [
+    usuarios_crudos = [
         ("Carlos Andrés Pérez",   "c.perez@unitec.edu.co",      "unitec2026", "Estudiante"),
         ("Valentina Gómez",        "v.gomez@unitec.edu.co",       "unitec2026", "Estudiante"),
         ("Jorge Luis Rodríguez",   "j.rodriguez@unitec.edu.co",   "unitec2026", "Estudiante"),
@@ -148,6 +149,13 @@ def insertar_datos_prueba(conn, cursor):
         ("Dra. María Fernández",   "maria.prof@unitec.edu.co",    "prof2026",   "Profesor"),
         ("Dr. Carlos Ramírez",     "carlos.prof@unitec.edu.co",   "prof2026",   "Profesor"),
     ]
+    
+    # Aplicar hash a las contraseñas
+    usuarios = []
+    for u in usuarios_crudos:
+        hash_pwd = generate_password_hash(u[2])
+        usuarios.append((u[0], u[1], hash_pwd, u[3]))
+
     ins, omi = _insertar_lote(
         cursor, "usuarios",
         ("nombre", "correo_institucional", "contrasena", "rol"),
