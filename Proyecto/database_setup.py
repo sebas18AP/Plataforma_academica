@@ -141,13 +141,25 @@ def insertar_datos_prueba(conn, cursor):
     print("\n-- Usuarios --")
     usuarios_crudos = [
         ("Carlos Andrés Pérez",   "c.perez@unitec.edu.co",      "unitec2026", "Estudiante"),
-        ("Valentina Gómez",        "v.gomez@unitec.edu.co",       "unitec2026", "Estudiante"),
-        ("Jorge Luis Rodríguez",   "j.rodriguez@unitec.edu.co",   "unitec2026", "Estudiante"),
-        ("Mariana Lucía Toro",     "m.toro@unitec.edu.co",        "unitec2026", "Estudiante"),
-        ("Felipe Santiago Ruiz",   "f.ruiz@unitec.edu.co",        "unitec2026", "Estudiante"),
-        ("Dr. Johan Martínez",     "johan@unitec.edu.co",         "prof2026",   "Profesor"),
-        ("Dra. María Fernández",   "maria.prof@unitec.edu.co",    "prof2026",   "Profesor"),
-        ("Dr. Carlos Ramírez",     "carlos.prof@unitec.edu.co",   "prof2026",   "Profesor"),
+        ("Valentina Gómez",       "v.gomez@unitec.edu.co",      "unitec2026", "Estudiante"),
+        ("Jorge Luis Rodríguez",  "j.rodriguez@unitec.edu.co",  "unitec2026", "Estudiante"),
+        ("Mariana Lucía Toro",    "m.toro@unitec.edu.co",       "unitec2026", "Estudiante"),
+        ("Felipe Santiago Ruiz",  "f.ruiz@unitec.edu.co",       "unitec2026", "Estudiante"),
+        ("Ana María Castro",      "a.castro@unitec.edu.co",     "unitec2026", "Estudiante"),
+        ("Luis Miguel Ortiz",     "l.ortiz@unitec.edu.co",      "unitec2026", "Estudiante"),
+        ("Sofía Isabel Vega",     "s.vega@unitec.edu.co",       "unitec2026", "Estudiante"),
+        ("Diego Alejandro Silva", "d.silva@unitec.edu.co",      "unitec2026", "Estudiante"),
+        ("Camila Andrea Rojas",   "c.rojas@unitec.edu.co",      "unitec2026", "Estudiante"),
+        ("Mateo Sebastián Cruz",  "m.cruz@unitec.edu.co",       "unitec2026", "Estudiante"),
+        ("Valeria Pineda",        "v.pineda@unitec.edu.co",     "unitec2026", "Estudiante"),
+        ("Sebastián Mora",        "s.mora@unitec.edu.co",       "unitec2026", "Estudiante"),
+        ("Daniela Ospina",        "d.ospina@unitec.edu.co",     "unitec2026", "Estudiante"),
+        ("Andrés Felipe Ríos",    "a.rios@unitec.edu.co",       "unitec2026", "Estudiante"),
+
+        ("Dr. Johan Martínez",    "johan@unitec.edu.co",        "prof2026",   "Profesor"),
+        ("Dra. María Fernández",  "maria.prof@unitec.edu.co",   "prof2026",   "Profesor"),
+        ("Dr. Carlos Ramírez",    "carlos.prof@unitec.edu.co",  "prof2026",   "Profesor"),
+        ("Dra. Laura Gómez",      "laura.prof@unitec.edu.co",   "prof2026",   "Profesor"),
     ]
     
     # Aplicar hash a las contraseñas
@@ -166,11 +178,7 @@ def insertar_datos_prueba(conn, cursor):
     # --- Estudiantes ---
     print("\n-- Estudiantes --")
     estudiantes = [
-        ("1001", "Juan Pérez",       "juan@unitec.edu"),
-        ("1002", "María García",     "maria@unitec.edu"),
-        ("1003", "Carlos López",     "carlos@unitec.edu"),
-        ("1004", "Ana Rodríguez",    "ana@unitec.edu"),
-        ("1005", "Pedro Martínez",   "pedro@unitec.edu"),
+        (f"{1001+i}", u[0], u[1]) for i, u in enumerate(usuarios_crudos) if u[3] == "Estudiante"
     ]
     ins, omi = _insertar_lote(
         cursor, "estudiantes", ("id", "nombre", "correo"), estudiantes
@@ -179,10 +187,10 @@ def insertar_datos_prueba(conn, cursor):
 
     # --- Profesores ---
     print("\n-- Profesores --")
+    profesores_data = [u for u in usuarios_crudos if u[3] == "Profesor"]
+    deptos = ["Ingeniería Eléctrica", "Física", "Matemáticas", "Sistemas"]
     profesores = [
-        ("P001", "Dr. Johan",    "johan@unitec.edu",           "Ingeniería Eléctrica"),
-        ("P002", "Dra. María",   "maria.prof@unitec.edu",      "Física"),
-        ("P003", "Dr. Carlos",   "carlos.prof@unitec.edu",     "Matemáticas"),
+        (f"P{i+1:03d}", p[0], p[1], deptos[i]) for i, p in enumerate(profesores_data)
     ]
     ins, omi = _insertar_lote(
         cursor, "profesores", ("id", "nombre", "correo", "departamento"), profesores
@@ -193,9 +201,9 @@ def insertar_datos_prueba(conn, cursor):
     print("\n-- Asignaturas --")
     asignaturas = [
         ("ING101", "Cálculo I",        4, "P001"),
-        ("ING102", "Programación I",   3, "P001"),
-        ("ING103", "Física I",         4, "P002"),
-        ("ING104", "Álgebra Lineal",   3, "P003"),
+        ("ING102", "Programación I",   3, "P002"),
+        ("ING103", "Física I",         4, "P003"),
+        ("ING104", "Álgebra Lineal",   3, "P004"),
     ]
     ins, omi = _insertar_lote(
         cursor, "asignaturas", ("codigo", "nombre", "creditos", "profesor_id"), asignaturas
@@ -204,23 +212,23 @@ def insertar_datos_prueba(conn, cursor):
 
     # --- Matrículas (asociar estudiantes a materias, periodo 2026-1) ---
     print("\n-- Matrículas --")
-    matriculas = [
-        ("1001", "ING101", "2026-1"),
-        ("1001", "ING102", "2026-1"),
-        ("1001", "ING103", "2026-1"),
-        ("1002", "ING101", "2026-1"),
-        ("1002", "ING102", "2026-1"),
-        ("1002", "ING103", "2026-1"),
-        ("1003", "ING101", "2026-1"),
-        ("1003", "ING102", "2026-1"),
-        ("1003", "ING104", "2026-1"),
-        ("1004", "ING102", "2026-1"),
-        ("1004", "ING103", "2026-1"),
-        ("1004", "ING104", "2026-1"),
-        ("1005", "ING101", "2026-1"),
-        ("1005", "ING102", "2026-1"),
-        ("1005", "ING103", "2026-1"),
-    ]
+    import random
+    random.seed(42) # For reproducibility
+    matriculas = []
+    calificaciones = []
+    
+    for est in estudiantes:
+        est_id = est[0]
+        # Each student enrolls in 2 to 4 subjects
+        num_materias = random.randint(2, 4)
+        materias_est = random.sample(asignaturas, num_materias)
+        for asig in materias_est:
+            asig_cod = asig[0]
+            matriculas.append((est_id, asig_cod, "2026-1"))
+            # Generate random grade between 2.0 and 5.0
+            nota = round(random.uniform(2.0, 5.0), 1)
+            calificaciones.append((est_id, asig_cod, nota, "Corte 1"))
+
     ins, omi = _insertar_lote(
         cursor, "matriculas",
         ("estudiante_id", "codigo_asignatura", "periodo"),
@@ -230,23 +238,6 @@ def insertar_datos_prueba(conn, cursor):
 
     # --- Calificaciones ---
     print("\n-- Calificaciones --")
-    calificaciones = [
-        ("1001", "ING101", 4.5, "Corte 1"),
-        ("1001", "ING102", 3.8, "Corte 1"),
-        ("1001", "ING103", 4.2, "Corte 1"),
-        ("1002", "ING101", 2.8, "Corte 1"),
-        ("1002", "ING102", 3.1, "Corte 1"),
-        ("1002", "ING103", 2.5, "Corte 1"),
-        ("1003", "ING101", 3.9, "Corte 1"),
-        ("1003", "ING102", 4.0, "Corte 1"),
-        ("1003", "ING104", 3.5, "Corte 1"),
-        ("1004", "ING102", 4.8, "Corte 1"),
-        ("1004", "ING103", 4.6, "Corte 1"),
-        ("1004", "ING104", 4.3, "Corte 1"),
-        ("1005", "ING101", 2.2, "Corte 1"),
-        ("1005", "ING102", 2.9, "Corte 1"),
-        ("1005", "ING103", 2.1, "Corte 1"),
-    ]
     ins, omi = _insertar_lote(
         cursor, "calificaciones",
         ("estudiante_id", "codigo_asignatura", "nota", "corte"),

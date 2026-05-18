@@ -78,8 +78,8 @@ def api_login():
     try:
         conn = get_db_connection()
         usuario_db = conn.execute(
-            'SELECT * FROM usuarios WHERE correo_institucional = ? AND contrasena = ?',
-            (correo, password)
+            'SELECT * FROM usuarios WHERE correo_institucional = ?',
+            (correo,)
         ).fetchone()
         conn.close()
     except Exception as e:
