@@ -7,7 +7,7 @@ cd /d "%~dp0"
 REM Crear entorno virtual si no existe
 if not exist ".venv\Scripts\python.exe" (
     echo Creando entorno virtual...
-    python -m venv .venv
+    py -m venv .venv
     if errorlevel 1 (
         echo Error: no se pudo crear el entorno virtual.
         exit /b 1
@@ -33,3 +33,4 @@ if exist ".venv\Scripts\python.exe" (
 echo Iniciando la aplicación...
 .venv\Scripts\python app.py
 endlocal
+

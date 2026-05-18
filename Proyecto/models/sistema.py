@@ -86,6 +86,14 @@ class SistemaAcademico:
             conn.close()
         return None
 
+    def obtener_usuario_por_correo(self, correo):
+        """Busca un usuario en la tabla de credenciales para autenticación."""
+        conn = self._get_connection()
+        try:
+            return conn.execute("SELECT * FROM usuarios WHERE correo_institucional = ?", (correo,)).fetchone()
+        finally:
+            conn.close()
+
     def actualizar_usuario(self, correo_actual, rol, nombre, contrasena_nueva=None, departamento=None):
         """Actualiza la información del usuario en la tabla de autenticación y su perfil."""
         conn = self._get_connection()
@@ -319,6 +327,93 @@ class SistemaAcademico:
         ).fetchone()
         conn.close()
         return fila["promedio"] if fila["promedio"] is not None else 0.0
+
+    def obtener_promedios_todos_estudiantes(self):
+        """Obtiene el promedio de todos los estudiantes en una sola consulta SQL (Evita N+1)."""
+        conn = self._get_connection()
+        filas = conn.execute("""
+            SELECT e.id, e.nombre, ROUND(AVG(c.nota), 2) AS promedio
+            FROM estudiantes e
+            LEFT JOIN calificaciones c ON e.id = c.estudiante_id
+            GROUP BY e.id, e.nombre
+        """).fetchall()
+        conn.close()
+        return [{"id": f["id"], "nombre": f["nombre"], "promedio": f["promedio"] if f["promedio"] is not None else 0.0} for f in filas]
+
+    def obtener_promedios_todas_asignaturas(self):
+        """Obtiene el promedio de todas las asignaturas en una sola consulta SQL (Evita N+1)."""
+        conn = self._get_connection()
+        filas = conn.execute("""
+            SELECT a.codigo, a.nombre, ROUND(AVG(c.nota), 2) AS promedio
+            FROM asignaturas a
+            LEFT JOIN calificaciones c ON a.codigo = c.codigo_asignatura
+            GROUP BY a.codigo, a.nombre
+        """).fetchall()
+        conn.close()
+        return [{"codigo": f["codigo"], "nombre": f["nombre"], "promedio": f["promedio"] if f["promedio"] is not None else 0.0} for f in filas]
+
+    def obtener_estadisticas_globales_sql(self):
+        """Obtiene estadísticas globales agregadas de toda la BD en una sola consulta."""
+        conn = self._get_connection()
+        fila = conn.execute("""
+            SELECT 
+                COUNT(*) AS total_calificaciones,
+                ROUND(AVG(nota), 2) AS promedio_general,
+                MAX(nota) AS nota_maxima,
+                MIN(nota) AS nota_minima
+            FROM calificaciones
+        """).fetchone()
+        
+        aprobados_fila = conn.execute("SELECT COUNT(*) as aprobados FROM calificaciones WHERE nota >= 3.0").fetchone()
+        conn.close()
+        
+        total_calif = fila["total_calificaciones"] or 0
+        aprobados = aprobados_fila["aprobados"] or 0
+        reprobados = total_calif - aprobados
+        
+        return {
+            "total_calificaciones": total_calif,
+            "promedio_general": fila["promedio_general"] if fila["promedio_general"] is not None else 0.0,
+            "nota_maxima": fila["nota_maxima"] if fila["nota_maxima"] is not None else 0.0,
+            "nota_minima": fila["nota_minima"] if fila["nota_minima"] is not None else 0.0,
+            "aprobados": aprobados,
+            "reprobados": reprobados,
+            "tasa_aprobacion": round((aprobados / total_calif * 100), 1) if total_calif > 0 else 0
+        }
+
+    def obtener_estadisticas_estudiante(self, estudiante_id):
+        """Obtiene estadísticas específicas de un estudiante."""
+        conn = self._get_connection()
+        total_asignaturas = conn.execute("SELECT COUNT(*) as count FROM matriculas WHERE estudiante_id = ?", (estudiante_id,)).fetchone()["count"]
+        
+        fila = conn.execute("""
+            SELECT 
+                COUNT(*) AS total_calificaciones,
+                ROUND(AVG(nota), 2) AS promedio_general,
+                MAX(nota) AS nota_maxima,
+                MIN(nota) AS nota_minima
+            FROM calificaciones
+            WHERE estudiante_id = ?
+        """, (estudiante_id,)).fetchone()
+        
+        aprobados_fila = conn.execute("SELECT COUNT(*) as aprobados FROM calificaciones WHERE estudiante_id = ? AND nota >= 3.0", (estudiante_id,)).fetchone()
+        conn.close()
+        
+        total_calif = fila["total_calificaciones"] or 0
+        aprobados = aprobados_fila["aprobados"] or 0
+        reprobados = total_calif - aprobados
+        
+        return {
+            "total_estudiantes": 1,
+            "total_asignaturas": total_asignaturas,
+            "total_calificaciones": total_calif,
+            "promedio_general": fila["promedio_general"] if fila["promedio_general"] is not None else 0.0,
+            "nota_maxima": fila["nota_maxima"] if fila["nota_maxima"] is not None else 0.0,
+            "nota_minima": fila["nota_minima"] if fila["nota_minima"] is not None else 0.0,
+            "aprobados": aprobados,
+            "reprobados": reprobados,
+            "tasa_aprobacion": round((aprobados / total_calif * 100), 1) if total_calif > 0 else 0
+        }
 
     def obtener_distribucion_notas(self):
         """Cuenta aprobados y reprobados directamente con SQL."""

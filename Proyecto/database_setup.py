@@ -20,7 +20,7 @@ from werkzeug.security import generate_password_hash
 
 # --- Ruta de la base de datos ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "data_base", "academico.db")
+DB_PATH = os.path.join(BASE_DIR, "academico.db")
 
 
 # ================================================================
@@ -87,7 +87,8 @@ def crear_tablas(conn, cursor):
             codigo_asignatura   TEXT    NOT NULL,
             periodo             TEXT    NOT NULL,
             FOREIGN KEY (estudiante_id)     REFERENCES estudiantes(id),
-            FOREIGN KEY (codigo_asignatura) REFERENCES asignaturas(codigo)
+            FOREIGN KEY (codigo_asignatura) REFERENCES asignaturas(codigo),
+            UNIQUE(estudiante_id, codigo_asignatura, periodo)
         )
     """)
     print("[OK] Tabla 'matriculas' creada correctamente.")
@@ -101,7 +102,8 @@ def crear_tablas(conn, cursor):
             nota                REAL    NOT NULL,
             corte               TEXT    NOT NULL,
             FOREIGN KEY (estudiante_id)     REFERENCES estudiantes(id),
-            FOREIGN KEY (codigo_asignatura) REFERENCES asignaturas(codigo)
+            FOREIGN KEY (codigo_asignatura) REFERENCES asignaturas(codigo),
+            UNIQUE(estudiante_id, codigo_asignatura, corte)
         )
     """)
     print("[OK] Tabla 'calificaciones' creada correctamente.")

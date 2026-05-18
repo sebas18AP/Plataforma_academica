@@ -24,6 +24,19 @@
                 <p class="text-gray-500">Asigna calificaciones a los estudiantes en las materias impartidas.</p>
             </div>
 
+            <!-- Mensajes Flash -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                <div class="mb-4">
+                {% for category, message in messages %}
+                  <div class="p-4 rounded-lg mb-2 {{ 'bg-green-100 text-green-700 border border-green-400' if category == 'success' else 'bg-red-100 text-red-700 border border-red-400' }}">
+                    {{ message }}
+                  </div>
+                {% endfor %}
+                </div>
+              {% endif %}
+            {% endwith %}
+
             <form action="/calificar" method="POST" class="space-y-6">
                 <!-- Select Estudiantes -->
                 <div>

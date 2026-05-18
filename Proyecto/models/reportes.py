@@ -42,13 +42,16 @@ class GestorReportes:
         if not self.sistema.estudiantes or not self.sistema.calificaciones:
             return self._grafico_vacio("No hay datos de estudiantes o calificaciones")
         
+        estudiantes_db = self.sistema.obtener_promedios_todos_estudiantes()
+        if not estudiantes_db:
+            return self._grafico_vacio("No hay datos de estudiantes o calificaciones")
+            
         datos = []
-        for est in self.sistema.estudiantes:
-            promedio = self.sistema.calcular_promedio_estudiante(est.identificacion)
+        for est in estudiantes_db:
             datos.append({
-                'Estudiante': f"{est.nombre}",
-                'ID': est.identificacion,
-                'Promedio': promedio
+                'Estudiante': est['nombre'],
+                'ID': est['id'],
+                'Promedio': est['promedio']
             })
         
         # Ordenar por promedio descendente
@@ -90,13 +93,16 @@ class GestorReportes:
         if not self.sistema.asignaturas or not self.sistema.calificaciones:
             return self._grafico_vacio("No hay datos de asignaturas o calificaciones")
         
+        asignaturas_db = self.sistema.obtener_promedios_todas_asignaturas()
+        if not asignaturas_db:
+            return self._grafico_vacio("No hay datos de asignaturas o calificaciones")
+            
         datos = []
-        for asig in self.sistema.asignaturas:
-            promedio = self.sistema.calcular_promedio_asignatura(asig.codigo)
+        for asig in asignaturas_db:
             datos.append({
-                'Asignatura': asig.nombre,
-                'Codigo': asig.codigo,
-                'Promedio': promedio
+                'Asignatura': asig['nombre'],
+                'Codigo': asig['codigo'],
+                'Promedio': asig['promedio']
             })
         
         # Ordenar por promedio descendente
@@ -204,35 +210,14 @@ class GestorReportes:
     
     #  Estadisticas resumen de esta:
     def obtener_estadisticas_generales(self):
-        """Retorna estadísticas generales del sistema"""
-        if not self.sistema.calificaciones:
-            return {
-                'total_estudiantes': len(self.sistema.estudiantes),
-                'total_asignaturas': len(self.sistema.asignaturas),
-                'total_calificaciones': 0,
-                'promedio_general': 0,
-                'nota_maxima': 0,
-                'nota_minima': 0,
-                'tasa_aprobacion': 0
-            }
+        """Retorna estadísticas generales del sistema de forma optimizada"""
+        stats = self.sistema.obtener_estadisticas_globales_sql()
         
-        notas = [c.nota_obtenida for c in self.sistema.calificaciones]
-        distribucion = self.sistema.obtener_distribucion_notas()
+        # Agregar los totales de estudiantes y asignaturas que no están en la tabla calificaciones
+        stats['total_estudiantes'] = len(self.sistema.estudiantes)
+        stats['total_asignaturas'] = len(self.sistema.asignaturas)
         
-        promedio_general = round(sum(notas) / len(notas), 2)
-        tasa_aprobacion = round((distribucion['Aprobados'] / len(notas) * 100), 1) if notas else 0
-        
-        return {
-            'total_estudiantes': len(self.sistema.estudiantes),
-            'total_asignaturas': len(self.sistema.asignaturas),
-            'total_calificaciones': len(self.sistema.calificaciones),
-            'promedio_general': promedio_general,
-            'nota_maxima': max(notas) if notas else 0,
-            'nota_minima': min(notas) if notas else 0,
-            'tasa_aprobacion': tasa_aprobacion,
-            'aprobados': distribucion['Aprobados'],
-            'reprobados': distribucion['Reprobados']
-        }
+        return stats
     
     # UTILIDADES 
     def _grafico_vacio(self, mensaje):

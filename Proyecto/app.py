@@ -1,5 +1,7 @@
 # pyrefly: ignore [missing-import]
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+# pyrefly: ignore [missing-import]
+from functools import wraps
 # pyrefly: ignore [missing-import]
 from werkzeug.security import check_password_hash
 
@@ -15,13 +17,8 @@ import sqlite3
 
 # --- Ruta de la base de datos SQLite ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'data_base', 'academico.db')
+DB_PATH = os.path.join(BASE_DIR, 'academico.db')
 
-def get_db_connection():
-    """Abre una conexión a la base de datos y devuelve filas como diccionarios."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row  # acceso por nombre de columna
-    return conn
 
 def init_db():
     """
@@ -52,6 +49,21 @@ app.secret_key = os.environ.get('SECRET_KEY', 'clave_local_desarrollo')
 sistema = SistemaAcademico(DB_PATH)
 gestor_reportes = GestorReportes(sistema)
 
+# Decorador de RBAC
+def requiere_rol(*roles):
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if 'usuario' not in session:
+                flash('Por favor inicie sesión para acceder a esta página.', 'error')
+                return redirect(url_for('login'))
+            if session.get('rol') not in roles:
+                flash('Acceso denegado. No tiene los permisos necesarios.', 'error')
+                return redirect(url_for('dashboard'))
+            return f(*args, **kwargs)
+        return wrapped
+    return wrapper
+
 # rutas de autenticacion
 @app.route('/')
 def login():
@@ -62,10 +74,20 @@ def dashboard():
     if 'usuario' not in session:
         return redirect(url_for('login'))
     
-    estadisticas = gestor_reportes.obtener_estadisticas_generales()
+    rol = session.get('rol')
+    if rol == 'Estudiante':
+        correo = session.get('correo')
+        estudiante_db = sistema.obtener_perfil_usuario(correo, rol)
+        if estudiante_db:
+            estadisticas = sistema.obtener_estadisticas_estudiante(estudiante_db['identificacion'])
+        else:
+            estadisticas = gestor_reportes.obtener_estadisticas_generales()
+    else:
+        estadisticas = gestor_reportes.obtener_estadisticas_generales()
+        
     return render_template('dashboard.html', 
                          usuario=session.get('usuario'),
-                         rol=session.get('rol'),
+                         rol=rol,
                          estadisticas=estadisticas)
 
 @app.route('/api/login', methods=['POST'])
@@ -76,12 +98,7 @@ def api_login():
 
     # --- Autenticación contra la base de datos SQLite ---
     try:
-        conn = get_db_connection()
-        usuario_db = conn.execute(
-            'SELECT * FROM usuarios WHERE correo_institucional = ?',
-            (correo,)
-        ).fetchone()
-        conn.close()
+        usuario_db = sistema.obtener_usuario_por_correo(correo)
     except Exception as e:
         return jsonify({'success': False, 'mensaje': f'Error en la base de datos: {str(e)}'}), 500
 
@@ -136,10 +153,12 @@ def matricular():
         periodo = request.form.get('periodo')
         
         if not all([estudiante_id, codigo_asig, periodo]):
-            return "Error: Faltan campos obligatorios", 400
+            flash('Error: Faltan campos obligatorios', 'error')
+            return redirect(url_for('matricular'))
             
         mensaje = sistema.matricular_estudiante(estudiante_id, codigo_asig, periodo)
-        return redirect(url_for('dashboard')) # Redirigir al dashboard tras matricular
+        flash(mensaje, 'success' if 'exito' in mensaje.lower() else 'error')
+        return redirect(url_for('dashboard'))
 
     # Cargar datos para los selects
     estudiantes = sistema.obtener_estudiantes()
@@ -150,13 +169,8 @@ def matricular():
                          usuario=session.get('usuario'))
 
 @app.route('/calificar', methods=['GET', 'POST'])
+@requiere_rol('Profesor')
 def calificar():
-    if 'usuario' not in session:
-        return redirect(url_for('login'))
-        
-    if session.get('rol') != 'Profesor':
-        return "Acceso denegado. Solo los profesores pueden calificar.", 403
-    
     if request.method == 'POST':
         estudiante_id = request.form.get('estudiante_id')
         codigo_asig = request.form.get('codigo_asignatura')
@@ -164,10 +178,11 @@ def calificar():
         corte = request.form.get('corte')
         
         if not all([estudiante_id, codigo_asig, nota, corte]):
-            return "Error: Faltan campos obligatorios", 400
+            flash('Error: Faltan campos obligatorios', 'error')
+            return redirect(url_for('calificar'))
             
         mensaje = sistema.registrar_calificacion(estudiante_id, codigo_asig, nota, corte)
-        # Redirigir al dashboard tras calificar, o podríamos mostrar un mensaje de éxito
+        flash(mensaje, 'success' if 'exito' in mensaje.lower() else 'error')
         return redirect(url_for('dashboard'))
 
     # Cargar datos para los selects
@@ -192,7 +207,8 @@ def perfil():
         departamento = request.form.get('departamento') # Solo para profesores
         
         if not nombre:
-            return "Error: El nombre es obligatorio", 400
+            flash('Error: El nombre es obligatorio', 'error')
+            return redirect(url_for('perfil'))
             
         success, mensaje = sistema.actualizar_usuario(
             correo_actual=correo, 
@@ -204,9 +220,11 @@ def perfil():
         
         if success:
             session['usuario'] = nombre # Actualizar el nombre en la sesión
+            flash(mensaje, 'success')
             return redirect(url_for('dashboard'))
         else:
-            return f"Error al actualizar: {mensaje}", 500
+            flash(f"Error al actualizar: {mensaje}", 'error')
+            return redirect(url_for('perfil'))
 
     # GET: Cargar datos actuales
     perfil_data = sistema.obtener_perfil_usuario(correo, rol)
