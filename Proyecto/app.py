@@ -14,6 +14,7 @@ from models.profesor import Profesor
 from models.reportes import GestorReportes
 import os
 import sqlite3
+from datetime import datetime
 
 # --- Ruta de la base de datos SQLite ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -75,20 +76,28 @@ def dashboard():
         return redirect(url_for('login'))
     
     rol = session.get('rol')
+    consejos = []
     if rol == 'Estudiante':
         correo = session.get('correo')
         estudiante_db = sistema.obtener_perfil_usuario(correo, rol)
         if estudiante_db:
-            estadisticas = sistema.obtener_estadisticas_estudiante(estudiante_db['identificacion'])
+            ident = estudiante_db['identificacion']
+            estadisticas = sistema.obtener_estadisticas_estudiante(ident)
+            notas = sistema.obtener_notas_estudiante(ident)
+            consejos = sistema.generar_consejos_estudiante(ident)
         else:
             estadisticas = gestor_reportes.obtener_estadisticas_generales()
+            notas = []
     else:
         estadisticas = gestor_reportes.obtener_estadisticas_generales()
+        notas = []
         
     return render_template('dashboard.html', 
                          usuario=session.get('usuario'),
                          rol=rol,
-                         estadisticas=estadisticas)
+                         estadisticas=estadisticas,
+                         notas=notas,
+                         consejos=consejos)
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -232,6 +241,40 @@ def perfil():
                          usuario=session.get('usuario'),
                          rol=rol,
                          perfil=perfil_data)
+@app.route('/simulador')
+@requiere_rol('Estudiante')
+def simulador():
+    correo = session.get('correo')
+    rol = session.get('rol')
+    estudiante_db = sistema.obtener_perfil_usuario(correo, rol)
+    
+    if not estudiante_db:
+        flash('No se pudo encontrar la información del estudiante.', 'error')
+        return redirect(url_for('dashboard'))
+        
+    proyecciones = sistema.obtener_proyeccion_estudiante(estudiante_db['identificacion'])
+    return render_template('simulador.html',
+                         usuario=session.get('usuario'),
+                         rol=rol,
+                         proyecciones=proyecciones)
+
+@app.route('/boletin')
+@requiere_rol('Estudiante')
+def boletin():
+    correo = session.get('correo')
+    rol = session.get('rol')
+    estudiante_db = sistema.obtener_perfil_usuario(correo, rol)
+    
+    if not estudiante_db:
+        flash('No se pudo cargar la información para el boletín.', 'error')
+        return redirect(url_for('dashboard'))
+        
+    boletin_data = sistema.obtener_boletin_estudiante(estudiante_db['identificacion'])
+    if not boletin_data:
+        flash('No se pudo generar el boletín oficial.', 'error')
+        return redirect(url_for('dashboard'))
+        
+    return render_template('boletin.html', boletin=boletin_data, fecha=datetime.now().strftime('%d/%m/%Y'))
 
 # rutas de reportes 
 @app.route('/reportes')

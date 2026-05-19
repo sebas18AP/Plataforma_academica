@@ -445,3 +445,229 @@ class SistemaAcademico:
         """).fetchall()
         conn.close()
         return [{"id": f["id"], "nombre": f["nombre"], "promedio": f["promedio"]} for f in filas]
+
+    def obtener_notas_estudiante(self, estudiante_id):
+        """Obtiene el historial detallado de notas de un estudiante por cortes."""
+        conn = self._get_connection()
+        try:
+            filas = conn.execute("""
+                SELECT a.codigo, a.nombre as asignatura, c.corte, c.nota
+                FROM matriculas m
+                JOIN asignaturas a ON m.codigo_asignatura = a.codigo
+                LEFT JOIN calificaciones c ON m.estudiante_id = c.estudiante_id AND m.codigo_asignatura = c.codigo_asignatura
+                WHERE m.estudiante_id = ?
+                ORDER BY a.nombre, c.corte
+            """, (estudiante_id,)).fetchall()
+            
+            resultados = {}
+            for f in filas:
+                codigo = f["codigo"]
+                if codigo not in resultados:
+                    resultados[codigo] = {
+                        "asignatura": f["asignatura"],
+                        "Corte 1": "-",
+                        "Corte 2": "-",
+                        "Corte 3": "-",
+                        "Final": "-",
+                        "definitiva": 0.0
+                    }
+                if f["corte"] and f["nota"] is not None:
+                    resultados[codigo][f["corte"]] = f["nota"]
+                    
+            for codigo, datos in resultados.items():
+                notas = [datos[c] for c in ["Corte 1", "Corte 2", "Corte 3", "Final"] if datos[c] != "-"]
+                if notas:
+                    datos["definitiva"] = round(sum(notas) / len(notas), 2)
+                else:
+                    datos["definitiva"] = "-"
+                    
+            return list(resultados.values())
+        finally:
+            conn.close()
+
+    def obtener_proyeccion_estudiante(self, estudiante_id):
+        """
+        Calcula la proyección de notas con pesos exactos:
+        Corte 1 (30%), Corte 2 (20%), Corte 3 (20%), Final (30%).
+        Genera opciones de distribución variable para múltiples cortes faltantes.
+        """
+        notas_actuales = self.obtener_notas_estudiante(estudiante_id)
+        pesos = {
+            "Corte 1": 0.30,
+            "Corte 2": 0.20,
+            "Corte 3": 0.20,
+            "Final": 0.30
+        }
+        
+        proyecciones = []
+        for mat in notas_actuales:
+            acumulado = 0.0
+            peso_evaluado = 0.0
+            faltantes = []
+            
+            for corte, peso in pesos.items():
+                if mat[corte] != "-":
+                    acumulado += mat[corte] * peso
+                    peso_evaluado += peso
+                else:
+                    faltantes.append(corte)
+            
+            peso_restante = round(1.0 - peso_evaluado, 2)
+            porcentaje_evaluado = int(round(peso_evaluado * 100))
+            porcentaje_restante = int(round(peso_restante * 100))
+            
+            opciones = []
+            
+            if len(faltantes) == 0:
+                nota_requerida = 0.0
+                if acumulado >= 3.0:
+                    estado = "aprobada"
+                    mensaje = "¡Materia superada con éxito! Has completado el 100% de los cortes."
+                else:
+                    estado = "imposible"
+                    mensaje = f"Materia finalizada. Definitiva ({round(acumulado, 2)}) inferior a 3.0."
+            else:
+                puntos_faltantes = round(3.0 - acumulado, 4)
+                nota_requerida = round(puntos_faltantes / peso_restante, 2)
+                
+                if nota_requerida <= 0.0:
+                    estado = "aprobada"
+                    nota_requerida = 0.0
+                    mensaje = "¡Felicidades! Ya tienes suficientes puntos acumulados para asegurar la materia."
+                elif nota_requerida > 5.0:
+                    estado = "imposible"
+                    mensaje = f"Matemáticamente imposible. Necesitarías {nota_requerida} en promedio."
+                else:
+                    if nota_requerida <= 3.0:
+                        estado = "facil"
+                        mensaje = f"Buen panorama: necesitas un promedio accesible de {nota_requerida} en lo que falta."
+                    elif nota_requerida <= 4.2:
+                        estado = "moderado"
+                        mensaje = f"Requiere constancia: necesitas promediar {nota_requerida} en los cortes restantes."
+                    else:
+                        estado = "dificil"
+                        mensaje = f"¡Alerta! Necesitas un rendimiento sobresaliente de {nota_requerida} para aprobar."
+                    
+                    if len(faltantes) > 1:
+                        opciones.append(f"Uniforme: Promediar {nota_requerida} en los cortes restantes ({', '.join(faltantes)}).")
+                        
+                        proximo = faltantes[0]
+                        peso_proximo = pesos[proximo]
+                        peso_subsiguiente = round(peso_restante - peso_proximo, 2)
+                        
+                        puntos_si_3 = puntos_faltantes - (3.0 * peso_proximo)
+                        nota_resto_si_3 = round(puntos_si_3 / peso_subsiguiente, 1)
+                        if 1.0 <= nota_resto_si_3 <= 5.0:
+                            nombres_resto = ", ".join(faltantes[1:])
+                            opciones.append(f"Estratégica: Sacar 3.0 en {proximo} y necesitar {max(1.0, nota_resto_si_3)} en el resto ({nombres_resto}).")
+                            
+                        puntos_si_4 = puntos_faltantes - (4.0 * peso_proximo)
+                        nota_resto_si_4 = round(puntos_si_4 / peso_subsiguiente, 1)
+                        if 0.0 <= nota_resto_si_4 <= 5.0:
+                            nombres_resto = ", ".join(faltantes[1:])
+                            opciones.append(f"Aseguradora: Asegurar 4.0 en {proximo} para relajar la nota a {max(1.0, nota_resto_si_4)} en el resto ({nombres_resto}).")
+                    elif len(faltantes) == 1:
+                        opciones.append(f"Último esfuerzo: Necesitas exactamente {nota_requerida} en la evaluación de {faltantes[0]} ({int(pesos[faltantes[0]]*100)}%).")
+
+            proyecciones.append({
+                "asignatura": mat["asignatura"],
+                "acumulado": round(acumulado, 2),
+                "definitiva": mat["definitiva"],
+                "porcentaje_evaluado": porcentaje_evaluado,
+                "porcentaje_restante": porcentaje_restante,
+                "cortes_restantes": len(faltantes),
+                "cortes_faltantes_nombres": faltantes,
+                "nota_requerida": nota_requerida,
+                "estado": estado,
+                "mensaje": mensaje,
+                "opciones": opciones
+            })
+            
+        return proyecciones
+
+    def obtener_boletin_estudiante(self, estudiante_id):
+        """Genera los datos consolidados y oficiales para el boletín académico."""
+        conn = self._get_connection()
+        try:
+            estudiante = conn.execute("SELECT id, nombre, correo FROM estudiantes WHERE id = ?", (estudiante_id,)).fetchone()
+            if not estudiante:
+                return None
+                
+            notas_materia = self.obtener_notas_estudiante(estudiante_id)
+            
+            suma_definitivas = 0.0
+            materias_con_definitiva = 0
+            for mat in notas_materia:
+                if mat['definitiva'] != '-' and mat['definitiva'] > 0:
+                    suma_definitivas += mat['definitiva']
+                    materias_con_definitiva += 1
+                    
+            promedio_gpa = round(suma_definitivas / materias_con_definitiva, 2) if materias_con_definitiva > 0 else 0.0
+            
+            import hashlib
+            raw_data = f"{estudiante['id']}-{estudiante['nombre']}-{promedio_gpa}"
+            codigo_verificacion = "UNITEC-" + hashlib.sha256(raw_data.encode()).hexdigest()[:8].upper()
+            
+            return {
+                "estudiante": estudiante,
+                "asignaturas": notas_materia,
+                "promedio_general": promedio_gpa,
+                "total_asignaturas": len(notas_materia),
+                "codigo_verificacion": codigo_verificacion
+            }
+        finally:
+            conn.close()
+
+    def generar_consejos_estudiante(self, estudiante_id):
+        """Genera un análisis inteligente de tendencias y alertas tempranas para el estudiante."""
+        notas_materia = self.obtener_notas_estudiante(estudiante_id)
+        proyecciones = self.obtener_proyeccion_estudiante(estudiante_id)
+        
+        consejos = []
+        for mat, proy in zip(notas_materia, proyecciones):
+            asig = mat["asignatura"]
+            c1 = mat["Corte 1"]
+            c2 = mat["Corte 2"]
+            
+            if c1 != "-" and c2 != "-":
+                dif = round(c1 - c2, 2)
+                if dif >= 0.6:
+                    consejos.append({
+                        "tipo": "alerta",
+                        "icono": "📉",
+                        "titulo": f"Caída de rendimiento en {asig}",
+                        "mensaje": f"Tus calificaciones disminuyeron {dif} puntos del Corte 1 al Corte 2. Te sugerimos reforzar los temas actuales y solicitar asesoría docente."
+                    })
+                elif round(c2 - c1, 2) >= 0.6:
+                    consejos.append({
+                        "tipo": "exito",
+                        "icono": "🚀",
+                        "titulo": f"Mejora notable en {asig}",
+                        "mensaje": f"¡Gran trabajo! Aumentaste {round(c2 - c1, 2)} puntos en el Corte 2. Sigue manteniendo este excelente ritmo de estudio."
+                    })
+
+            if mat["definitiva"] != "-" and mat["definitiva"] >= 4.5 and proy["porcentaje_evaluado"] >= 50:
+                consejos.append({
+                    "tipo": "excelencia",
+                    "icono": "🌟",
+                    "titulo": f"Nivel Sobresaliente en {asig}",
+                    "mensaje": f"Mantienes un promedio impecable de {mat['definitiva']}. Tienes un dominio destacado de esta materia."
+                })
+                
+            if proy["estado"] in ["moderado", "dificil"]:
+                consejos.append({
+                    "tipo": "advertencia",
+                    "icono": "⚠️",
+                    "titulo": f"Alerta Temprana en {asig}",
+                    "mensaje": f"Para aprobar necesitas promediar {proy['nota_requerida']} en el {proy['porcentaje_restante']}% restante. Es momento de enfocar tus horas de estudio autónomo aquí."
+                })
+                
+        if not consejos and notas_materia:
+            consejos.append({
+                "tipo": "info",
+                "icono": "💡",
+                "titulo": "Estabilidad Académica",
+                "mensaje": "Tus calificaciones se mantienen estables y sin riesgos inminentes. ¡Continúa cumpliendo con tus entregas a tiempo!"
+            })
+            
+        return consejos

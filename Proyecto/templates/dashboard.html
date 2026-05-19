@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Plataforma de Monitoreo Académico</title>
+    <title>Panel Principal - Plataforma de Monitoreo Académico</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
@@ -24,7 +24,7 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Título -->
-        <h1 class="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
+        <h1 class="text-3xl font-bold text-gray-900 mb-8">Panel Principal</h1>
 
         <!-- Mensajes Flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -72,6 +72,68 @@
             </div>
         </div>
 
+        {% if rol == 'Estudiante' %}
+        <!-- Consejero Virtual Académico -->
+        <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-2xl p-6 mb-8 text-white shadow-xl border border-indigo-800/50">
+            <div class="flex items-center gap-3 mb-4">
+                <span class="text-3xl">🤖</span>
+                <div>
+                    <h3 class="text-xl font-bold tracking-wide text-indigo-300">Consejero Virtual Académico</h3>
+                    <p class="text-xs text-indigo-200/70">Análisis continuo de rendimiento y alertas tempranas</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for c in consejos %}
+                <div class="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/10 flex gap-3 items-start shadow-inner">
+                    <span class="text-2xl">{{ c.icono }}</span>
+                    <div>
+                        <h4 class="font-bold text-sm {% if c.tipo == 'alerta' %}text-red-400{% elif c.tipo == 'exito' %}text-emerald-400{% elif c.tipo == 'excelencia' %}text-amber-300{% else %}text-cyan-300{% endif %}">{{ c.titulo }}</h4>
+                        <p class="text-xs text-slate-200 mt-1 leading-relaxed">{{ c.mensaje }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Tabla de Notas del Estudiante -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Mi Historial Académico</h3>
+            {% if notas %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 border-b border-gray-200">
+                            <th class="p-3 text-sm font-bold text-gray-700 uppercase">Asignatura</th>
+                            <th class="p-3 text-sm font-bold text-gray-700 uppercase text-center">Corte 1</th>
+                            <th class="p-3 text-sm font-bold text-gray-700 uppercase text-center">Corte 2</th>
+                            <th class="p-3 text-sm font-bold text-gray-700 uppercase text-center">Corte 3</th>
+                            <th class="p-3 text-sm font-bold text-gray-700 uppercase text-center">Final</th>
+                            <th class="p-3 text-sm font-bold text-gray-700 uppercase text-center">Definitiva</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notas %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                            <td class="p-3 text-gray-800 font-medium">{{ n.asignatura }}</td>
+                            <td class="p-3 text-center text-gray-600">{{ n['Corte 1'] }}</td>
+                            <td class="p-3 text-center text-gray-600">{{ n['Corte 2'] }}</td>
+                            <td class="p-3 text-center text-gray-600">{{ n['Corte 3'] }}</td>
+                            <td class="p-3 text-center text-gray-600">{{ n['Final'] }}</td>
+                            <td class="p-3 text-center font-bold {{ 'text-green-600' if n.definitiva != '-' and n.definitiva >= 3.0 else 'text-red-600' }}">
+                                {{ n.definitiva }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No tienes asignaturas matriculadas o no hay calificaciones registradas.</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
         <!-- Más estadísticas -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
             <!-- Calificaciones -->
@@ -118,6 +180,14 @@
                     <a href="/perfil" class="block text-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">
                         👤 Mi Perfil
                     </a>
+                    {% if rol == 'Estudiante' %}
+                    <a href="/simulador" class="block text-center px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg hover:from-amber-600 hover:to-orange-700 transition font-bold shadow">
+                        🎯 Simulador de Proyección
+                    </a>
+                    <a href="/boletin" class="block text-center px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg transition font-bold shadow">
+                        🖨️ Boletín Oficial (PDF)
+                    </a>
+                    {% endif %}
                     {% if rol != 'Estudiante' %}
                     <a href="/reportes" class="block text-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition">
                         📊 Ver Reportes

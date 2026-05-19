@@ -75,13 +75,13 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    document.getElementById('successMessage').textContent = '¡Login exitoso! Redirigiendo...';
+                    document.getElementById('successMessage').textContent = '¡Inicio de sesión exitoso! Redirigiendo...';
                     document.getElementById('successMessage').classList.remove('hidden');
                     setTimeout(() => {
                         window.location.href = '/dashboard';
                     }, 1500);
                 } else {
-                    document.getElementById('errorMessage').textContent = data.mensaje || 'Error en el login';
+                    document.getElementById('errorMessage').textContent = data.mensaje || 'Error al iniciar sesión';
                     document.getElementById('errorMessage').classList.remove('hidden');
                 }
             } catch (error) {
