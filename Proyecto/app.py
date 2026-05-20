@@ -1,22 +1,16 @@
-# pyrefly: ignore [missing-import]
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response
-# pyrefly: ignore [missing-import]
+import csv
 from functools import wraps
+from io import StringIO
+import os
+import sqlite3
+
+# pyrefly: ignore [missing-import]
+from flask import Flask, Response, flash, jsonify, redirect, render_template, request, session, url_for
 # pyrefly: ignore [missing-import]
 from werkzeug.security import check_password_hash
 
-from models.sistema import SistemaAcademico
-from models.estudiante import Estudiante
-from models.asignatura import Asignatura
-from models.calificacion import Calificacion
-from models.matricula import Matricula
-from models.profesor import Profesor
 from models.reportes import GestorReportes
-import os
-import sqlite3
-import csv
-from io import StringIO
-from datetime import datetime
+from models.sistema import SistemaAcademico
 
 # --- Ruta de la base de datos SQLite ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

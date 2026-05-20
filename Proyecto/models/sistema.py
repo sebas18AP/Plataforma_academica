@@ -1,11 +1,12 @@
+import hashlib
 import sqlite3
+
 # pyrefly: ignore [missing-import]
 from werkzeug.security import generate_password_hash
 
-
-from models.estudiante import Estudiante
 from models.asignatura import Asignatura
 from models.calificacion import Calificacion
+from models.estudiante import Estudiante
 from models.matricula import Matricula
 from models.profesor import Profesor
 
@@ -604,7 +605,6 @@ class SistemaAcademico:
                     
             promedio_gpa = round(suma_definitivas / materias_con_definitiva, 2) if materias_con_definitiva > 0 else 0.0
             
-            import hashlib
             raw_data = f"{estudiante['id']}-{estudiante['nombre']}-{promedio_gpa}"
             codigo_verificacion = "UNITEC-" + hashlib.sha256(raw_data.encode()).hexdigest()[:8].upper()
             
