@@ -20,7 +20,7 @@
 <body class="bg-gray-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
     <!-- Navbar -->
     <nav class="bg-white dark:bg-slate-800 shadow-lg border-b border-gray-200 dark:border-slate-700 transition-colors duration-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-[90rem] mx-auto px-6 sm:px-8 lg:px-12">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-8">
                     <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">⚡ Monitoreo Académico</div>
@@ -37,17 +37,17 @@
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="max-w-[90rem] mx-auto px-6 sm:px-8 lg:px-12 py-10">
         <!-- Título -->
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Reportes Estadísticos</h1>
-        <p class="text-gray-600 dark:text-gray-300 mb-8">Visualiza análisis detallados del desempeño académico</p>
+        <p class="text-gray-600 dark:text-gray-300 mb-10">Visualiza análisis detallados del desempeño académico</p>
 
-        <!-- Sección de Gráfico Interactivo de Barras (Chart.js) -->
-        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8 border border-gray-200/50 dark:border-slate-700 transition-colors duration-200">
-            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                <span>📊</span> Desempeño Promedio por Estudiante (Chart.js)
+        <!-- Sección de Gráfico Interactivo de Barras -->
+        <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 mb-12 border border-gray-200/50 dark:border-slate-700 transition-colors duration-200">
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-3">
+                <span>📊</span> Promedios Generales por Estudiante
             </h3>
-            <div class="h-96 relative">
+            <div class="h-[480px] relative w-full">
                 <canvas id="promedioEstudiantesChart"></canvas>
             </div>
         </div>
