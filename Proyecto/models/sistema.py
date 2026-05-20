@@ -164,6 +164,8 @@ class SistemaAcademico:
             return f"Estudiante {estudiante.nombre} registrado con éxito."
         except sqlite3.IntegrityError:
             return f"El estudiante con ID {estudiante.identificacion} ya existe."
+        except Exception as e:
+            return f"Error inesperado al registrar estudiante: {str(e)}"
         finally:
             conn.close()
 
@@ -252,7 +254,11 @@ class SistemaAcademico:
             conn.commit()
             return "Calificacion registrada con exito."
         except sqlite3.IntegrityError as e:
-            return f"Error al registrar calificacion: {e}"
+            if "UNIQUE" in str(e):
+                return "Error: El estudiante ya tiene una calificación registrada para este corte en esta asignatura."
+            return f"Error de integridad al registrar calificación: {e}"
+        except Exception as e:
+            return f"Error inesperado al registrar calificación: {str(e)}"
         finally:
             conn.close()
 
@@ -284,7 +290,11 @@ class SistemaAcademico:
             conn.commit()
             return "Matricula registrada con exito."
         except sqlite3.IntegrityError as e:
-            return f"Error al registrar matricula: {e}"
+            if "UNIQUE" in str(e):
+                return "Error: El estudiante ya se encuentra matriculado en esta asignatura para el periodo seleccionado."
+            return f"Error de integridad al registrar matrícula: {e}"
+        except Exception as e:
+            return f"Error inesperado al registrar matrícula: {str(e)}"
         finally:
             conn.close()
 
