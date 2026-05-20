@@ -5,17 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes - Plataforma de Monitoreo Académico</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+        if (localStorage.getItem('theme') === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen transition-colors duration-200">
     <!-- Navbar -->
-    <nav class="bg-white shadow-lg">
+    <nav class="bg-white dark:bg-slate-800 shadow-lg border-b border-gray-200 dark:border-slate-700 transition-colors duration-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center gap-8">
-                    <div class="text-2xl font-bold text-blue-600">⚡ Monitoreo Académico</div>
-                    <a href="/dashboard" class="text-gray-700 hover:text-blue-600 transition">← Volver al Inicio</a>
+                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">⚡ Monitoreo Académico</div>
+                    <a href="/dashboard" class="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition">← Volver al Inicio</a>
                 </div>
-                <div class="flex items-center">
+                <div class="flex items-center gap-4">
+                    <button id="theme-toggle" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-200 transition flex items-center justify-center border border-gray-200 dark:border-slate-600">
+                        <span class="dark:hidden">🌙 Oscuro</span>
+                        <span class="hidden dark:inline">☀️ Claro</span>
+                    </button>
                     <a href="/logout" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition">Cerrar sesión</a>
                 </div>
             </div>
@@ -24,88 +39,98 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Título -->
-        <h1 class="text-3xl font-bold text-gray-900 mb-2">Reportes Estadísticos</h1>
-        <p class="text-gray-600 mb-8">Visualiza análisis detallados del desempeño académico</p>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Reportes Estadísticos</h1>
+        <p class="text-gray-600 dark:text-gray-300 mb-8">Visualiza análisis detallados del desempeño académico</p>
+
+        <!-- Sección de Gráfico Interactivo de Barras (Chart.js) -->
+        <div class="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-8 border border-gray-200/50 dark:border-slate-700 transition-colors duration-200">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                <span>📊</span> Desempeño Promedio por Estudiante (Chart.js)
+            </h3>
+            <div class="h-96 relative">
+                <canvas id="promedioEstudiantesChart"></canvas>
+            </div>
+        </div>
 
         <!-- Grid de reportes -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
             <!-- Reporte 1: Distribución de Notas -->
-            <a href="/reportes/distribucion-notas" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+            <a href="/reportes/distribucion-notas" class="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-xl border border-gray-200/50 dark:border-slate-700 transition-all duration-200 transform hover:scale-105 overflow-hidden">
                 <div class="h-40 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white">
                     <span class="text-6xl">📊</span>
                 </div>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Distribución de Notas</h3>
-                    <p class="text-gray-600 text-sm mb-4">Histograma con la distribución de todas las calificaciones registradas en el sistema.</p>
-                    <div class="text-blue-600 font-semibold text-sm">Ver reporte →</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Distribución de Notas</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Histograma con la distribución de todas las calificaciones registradas en el sistema.</p>
+                    <div class="text-blue-600 dark:text-blue-400 font-semibold text-sm">Ver reporte →</div>
                 </div>
             </a>
 
             <!-- Reporte 2: Promedios por Estudiante -->
-            <a href="/reportes/promedios-estudiantes" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+            <a href="/reportes/promedios-estudiantes" class="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-xl border border-gray-200/50 dark:border-slate-700 transition-all duration-200 transform hover:scale-105 overflow-hidden">
                 <div class="h-40 bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white">
                     <span class="text-6xl">👥</span>
                 </div>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Promedios por Estudiante</h3>
-                    <p class="text-gray-600 text-sm mb-4">Gráfico de barras con el promedio académico de cada estudiante inscrito.</p>
-                    <div class="text-green-600 font-semibold text-sm">Ver reporte →</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Promedios por Estudiante</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Gráfico de barras con el promedio académico de cada estudiante inscrito.</p>
+                    <div class="text-green-600 dark:text-green-400 font-semibold text-sm">Ver reporte →</div>
                 </div>
             </a>
 
             <!-- Reporte 3: Promedios por Asignatura -->
-            <a href="/reportes/promedios-asignaturas" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+            <a href="/reportes/promedios-asignaturas" class="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-xl border border-gray-200/50 dark:border-slate-700 transition-all duration-200 transform hover:scale-105 overflow-hidden">
                 <div class="h-40 bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white">
                     <span class="text-6xl">📚</span>
                 </div>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Promedios por Asignatura</h3>
-                    <p class="text-gray-600 text-sm mb-4">Comparativa del desempeño general en cada asignatura del programa.</p>
-                    <div class="text-purple-600 font-semibold text-sm">Ver reporte →</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Promedios por Asignatura</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Comparativa del desempeño general en cada asignatura del programa.</p>
+                    <div class="text-purple-600 dark:text-purple-400 font-semibold text-sm">Ver reporte →</div>
                 </div>
             </a>
 
             <!-- Reporte 4: Aprobación vs Reprobación -->
-            <a href="/reportes/aprobacion" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+            <a href="/reportes/aprobacion" class="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-xl border border-gray-200/50 dark:border-slate-700 transition-all duration-200 transform hover:scale-105 overflow-hidden">
                 <div class="h-40 bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white">
                     <span class="text-6xl">📈</span>
                 </div>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Aprobación vs Reprobación</h3>
-                    <p class="text-gray-600 text-sm mb-4">Gráfico de pastel mostrando la proporción de estudiantes aprobados y reprobados.</p>
-                    <div class="text-orange-600 font-semibold text-sm">Ver reporte →</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Aprobación vs Reprobación</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Gráfico de pastel mostrando la proporción de estudiantes aprobados y reprobados.</p>
+                    <div class="text-orange-600 dark:text-orange-400 font-semibold text-sm">Ver reporte →</div>
                 </div>
             </a>
 
             <!-- Reporte 5: Rangos de Calificaciones -->
-            <a href="/reportes/rangos" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden">
+            <a href="/reportes/rangos" class="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-xl border border-gray-200/50 dark:border-slate-700 transition-all duration-200 transform hover:scale-105 overflow-hidden">
                 <div class="h-40 bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white">
                     <span class="text-6xl">📉</span>
                 </div>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Distribución por Rangos</h3>
-                    <p class="text-gray-600 text-sm mb-4">Análisis de calificaciones por rangos (Deficiente, Regular, Bueno, Excelente).</p>
-                    <div class="text-red-600 font-semibold text-sm">Ver reporte →</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Distribución por Rangos</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Análisis de calificaciones por rangos (Deficiente, Regular, Bueno, Excelente).</p>
+                    <div class="text-red-600 dark:text-red-400 font-semibold text-sm">Ver reporte →</div>
                 </div>
             </a>
 
             <!-- Reporte 6: Estudiantes en Riesgo -->
-            <a href="/reportes/riesgo" class="bg-white rounded-lg shadow-md hover:shadow-xl transition transform hover:scale-105 overflow-hidden border border-red-100">
+            <a href="/reportes/riesgo" class="bg-white dark:bg-slate-800 rounded-lg shadow-md hover:shadow-xl border border-red-200 dark:border-red-900 transition-all duration-200 transform hover:scale-105 overflow-hidden">
                 <div class="h-40 bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white">
                     <span class="text-6xl">⚠️</span>
                 </div>
                 <div class="p-6">
-                    <h3 class="text-xl font-bold text-gray-900 mb-2">Estudiantes en Riesgo</h3>
-                    <p class="text-gray-600 text-sm mb-4">Listado de estudiantes cuyo promedio general se encuentra por debajo de 3.0.</p>
-                    <div class="text-red-600 font-semibold text-sm">Ver reporte de alerta →</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Estudiantes en Riesgo</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Listado de estudiantes cuyo promedio general se encuentra por debajo de 3.0.</p>
+                    <div class="text-red-600 dark:text-red-400 font-semibold text-sm">Ver reporte de alerta →</div>
                 </div>
             </a>
         </div>
 
         <!-- Información útil -->
-        <div class="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-blue-900 mb-3">💡 Información útil</h3>
-            <ul class="list-disc list-inside space-y-2 text-blue-800 text-sm">
+        <div class="mt-12 bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 rounded-lg p-6 transition-colors duration-200">
+            <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-3">💡 Información útil</h3>
+            <ul class="list-disc list-inside space-y-2 text-blue-800 dark:text-blue-200 text-sm">
                 <li>Todos los gráficos son <strong>interactivos</strong>: puedes pasar el mouse para ver más detalles</li>
                 <li>Puedes <strong>hacer zoom</strong>, <strong>desplazarte</strong> y <strong>descargar</strong> los gráficos</li>
                 <li>Los datos se actualizan automáticamente cuando se registran nuevas calificaciones</li>
@@ -113,5 +138,80 @@
             </ul>
         </div>
     </div>
+
+    <script>
+        // Lógica de Modo Oscuro
+        const toggleBtn = document.getElementById('theme-toggle');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('theme', 'dark');
+                }
+            });
+        }
+
+        // Lógica de Chart.js
+        const ctx = document.getElementById('promedioEstudiantesChart').getContext('2d');
+        const dataEstudiantes = {{ promedios | tojson }};
+        
+        const labels = dataEstudiantes.map(e => e.nombre);
+        const promedios = dataEstudiantes.map(e => e.promedio);
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Promedio General',
+                    data: promedios,
+                    backgroundColor: promedios.map(p => p >= 3.0 ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                    borderColor: promedios.map(p => p >= 3.0 ? 'rgb(34, 197, 94)' : 'rgb(239, 68, 68)'),
+                    borderWidth: 1.5,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 5.0,
+                        ticks: {
+                            stepSize: 1.0,
+                            color: localStorage.getItem('theme') === 'dark' ? '#cbd5e1' : '#475569'
+                        },
+                        grid: {
+                            color: localStorage.getItem('theme') === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: localStorage.getItem('theme') === 'dark' ? '#cbd5e1' : '#475569'
+                        },
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ' Promedio: ' + context.parsed.y.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

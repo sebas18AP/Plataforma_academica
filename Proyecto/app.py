@@ -1,5 +1,5 @@
 # pyrefly: ignore [missing-import]
-from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for, flash, Response
 # pyrefly: ignore [missing-import]
 from functools import wraps
 # pyrefly: ignore [missing-import]
@@ -14,6 +14,8 @@ from models.profesor import Profesor
 from models.reportes import GestorReportes
 import os
 import sqlite3
+import csv
+from io import StringIO
 from datetime import datetime
 
 # --- Ruta de la base de datos SQLite ---
@@ -282,7 +284,48 @@ def reportes():
     if 'usuario' not in session:
         return redirect(url_for('login'))
     
-    return render_template('reportes.html', usuario=session.get('usuario'))
+    promedios = sistema.obtener_promedios_todos_estudiantes()
+    promedios_validos = [p for p in promedios if p['promedio'] > 0.0]
+    return render_template('reportes.html', usuario=session.get('usuario'), promedios=promedios_validos)
+
+@app.route('/exportar-notas')
+def exportar_notas():
+    if 'usuario' not in session or session.get('rol') == 'Estudiante':
+        flash('No tienes permisos para realizar esta accion.', 'error')
+        return redirect(url_for('login'))
+        
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    calificaciones = conn.execute("""
+        SELECT 
+            c.estudiante_id, 
+            e.nombre AS estudiante_nombre,
+            c.codigo_asignatura, 
+            a.nombre AS asignatura_nombre,
+            c.corte, 
+            c.nota
+        FROM calificaciones c
+        JOIN estudiantes e ON c.estudiante_id = e.id
+        JOIN asignaturas a ON c.codigo_asignatura = a.codigo
+        ORDER BY a.nombre, e.nombre, c.corte
+    """).fetchall()
+    conn.close()
+    
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['ID Estudiante', 'Nombre Estudiante', 'Codigo Asignatura', 'Nombre Asignatura', 'Corte', 'Nota'])
+    for c in calificaciones:
+        cw.writerow([c['estudiante_id'], c['estudiante_nombre'], c['codigo_asignatura'], c['asignatura_nombre'], c['corte'], c['nota']])
+        
+    output = si.getvalue()
+    bom = "\ufeff"
+    response_data = bom + output
+    
+    return Response(
+        response_data,
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=reporte_notas.csv"}
+    )
 
 @app.route('/reportes/distribucion-notas')
 def reporte_distribucion():

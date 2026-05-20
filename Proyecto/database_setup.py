@@ -221,15 +221,21 @@ def insertar_datos_prueba(conn, cursor):
     
     for est in estudiantes:
         est_id = est[0]
-        # Each student enrolls in 2 to 4 subjects
+        # Cada estudiante inscribe entre 2 y 4 asignaturas
         num_materias = random.randint(2, 4)
         materias_est = random.sample(asignaturas, num_materias)
         for asig in materias_est:
             asig_cod = asig[0]
             matriculas.append((est_id, asig_cod, "2026-1"))
-            # Generate random grade between 2.0 and 5.0
-            nota = round(random.uniform(2.0, 5.0), 1)
-            calificaciones.append((est_id, asig_cod, nota, "Corte 1"))
+            
+            # Determinamos de forma aleatoria cuántos cortes ya se han calificado (entre 1 y 4)
+            avance = random.choice([1, 2, 3, 4])
+            cortes_disponibles = ["Corte 1", "Corte 2", "Corte 3", "Final"]
+            for idx in range(avance):
+                corte_nombre = cortes_disponibles[idx]
+                # Generar calificaciones realistas variadas (desde 1.5 a 5.0)
+                nota = round(random.uniform(1.5, 5.0), 1)
+                calificaciones.append((est_id, asig_cod, nota, corte_nombre))
 
     ins, omi = _insertar_lote(
         cursor, "matriculas",
